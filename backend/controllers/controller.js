@@ -1,5 +1,6 @@
 const downloadQueue = require("../utils/queue");
 const { v4: uuid } = require("uuid");
+const path = require("path");
 const { upload, getPresignedURL } = require("../utils/supabaseClient");
 
 const transcribe = async (req, res, next) => {
@@ -12,7 +13,7 @@ const transcribe = async (req, res, next) => {
         message: "audio file not found",
       });
     }
-    const { mimetype } = req.file;
+    const { originalname, mimetype } = req.file;
     console.log("req file -> ", req.file);
 
     if (!mimetype || !mimetype.startsWith("audio/")) {
@@ -21,15 +22,18 @@ const transcribe = async (req, res, next) => {
         message: "only audio files are allowed.",
       });
     }
-    const path = await upload(req.file);
-    console.log("path ->", path);
-    const presignedURL = await getPresignedURL(path);
-    console.log("presigned url ->", presignedURL);
-
     const jobId = uuid();
+
+    const fileExt = path.extname(originalname).slice(1); // "mp3"
+    const fileName = `${jobId}.${fileExt}`;
+    const filePath = await upload(req.file, fileName);
+    console.log("path ->", filePath);
+    // const presignedURL = await getPresignedURL(filePath);
+    // console.log("presigned url ->", presignedURL);
+
     const payload = {
       jobId,
-      presignedURL,
+      supabasePath: filePath,
     };
     console.log("download queue payload ->", payload);
 

@@ -8,30 +8,19 @@ const BUCKET = process.env.SUPABASE_BUCKET;
 const FOLDER = process.env.SUPABASE_FOLDER;
 
 const supabase = createClient(PROJECT_URL, API_KEY);
-const upload = async (file, fileName) => {
-  if (!PROJECT_URL || !API_KEY || !BUCKET || !FOLDER || !file) {
+const upload = async (localPath, fileName, contentType = "audio/wav") => {
+  if (!PROJECT_URL || !API_KEY || !BUCKET || !localPath || !fileName) {
     return;
   }
-  const { mimetype, path } = file;
-  const buffer = await fs.readFile(path);
+
+  const buffer = await fs.readFile(localPath);
   const filePath = `${FOLDER}/${fileName}`;
-  console.log("file name ->", fileName);
-  console.log("filePath ->", filePath);
 
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .upload(filePath, buffer, {
-      contentType: mimetype || "audio/mpeg",
-      upsert: false,
-    });
-  console.log("data ->", data);
-  console.log("error ->", error);
-  console.log("data path ->", data.path);
+    .upload(filePath, buffer, { contentType, upsert: false });
 
-  if (error) {
-    throw new Error();
-  }
-
+  if (error) throw new Error(error.message);
   return data.path;
 };
 

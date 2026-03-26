@@ -1,2 +1,5 @@
 /backend/node_modules
 /backend/.env
+
+/convert-worker/node_modules
+/convert-worker/.env
