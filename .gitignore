@@ -12,3 +12,5 @@
 
 /aggregation-worker/node_modules
 /aggregation-worker/.env
+
+logs.txt
