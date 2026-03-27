@@ -6,3 +6,6 @@
 
 /chunk-worker/node_modules
 /chunk-worker/.env
+
+/transcription-workers/node_modules
+/transcription-workers/.env
