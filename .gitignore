@@ -3,3 +3,6 @@
 
 /convert-worker/node_modules
 /convert-worker/.env
+
+/chunk-worker/node_modules
+/chunk-worker/.env

@@ -9,7 +9,7 @@ async function downloadMp3(url, outputPath) {
   });
 
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`Failed to download audio. HTTP ${`response`.status}`);
+    throw new Error(`Failed to download audio. HTTP ${response.status}`);
   }
 
   const writer = fs.createWriteStream(outputPath);

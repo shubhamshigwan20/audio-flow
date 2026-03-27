@@ -1,14 +1,14 @@
 require("dotenv").config();
-const fs = require("fs");
-const { Worker } = require("bullmq");
 const express = require("express");
+const app = express();
 const helmet = require("helmet");
 const cors = require("cors");
-const app = express();
-const { connection, chunkQueue } = require("./utils/queue");
-const { getPresignedURL } = require("./utils/supabaseClient");
-const { downloadMp3, convertMp3ToWav } = require("./utils/helper");
-const { upload } = require("./utils/supabaseClient");
+const fs = require("fs");
+const { Worker } = require("bullmq");
+const { connection, transcriptionQueue } = require("./utils/queue");
+const { upload, getPresignedURL } = require("./utils/supabaseClient");
+const { downloadFile, splitAudio } = require("./utils/helper");
+
 const PORT = process.env.PORT || 80;
 
 app.use(helmet());
@@ -18,7 +18,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   return res.status(200).json({
     status: true,
-    service: "convert-worker",
+    service: "chunk-worker",
     timestamp: new Date().toISOString(),
   });
 });
@@ -30,9 +30,8 @@ app.get("/health", (req, res) => {
 });
 
 const worker = new Worker(
-  "download",
+  "chunk",
   async (job) => {
-    let mp3File;
     let wavFile;
     try {
       const jobId = job.data.jobId;
@@ -40,36 +39,38 @@ const worker = new Worker(
       console.log("job id ->", jobId);
       console.log("job name ->", supabasePath);
 
-      mp3File = `${jobId}.mp3`;
       wavFile = `${jobId}.wav`;
       const presignedUrl = await getPresignedURL(supabasePath);
-      await downloadMp3(presignedUrl, mp3File);
-      await convertMp3ToWav(mp3File, wavFile);
+      const downloadedWavFile = await downloadFile(presignedUrl, wavFile);
+      const chunks = await splitAudio(downloadedWavFile, jobId);
 
-      // const fileExt = path.extname(originalname).slice(1); // "mp3"
-      // const fileName = `${jobId}.${fileExt}`;
+      for (let i = 0; i < chunks.length; i++) {
+        const chunkKey = `chunks/${jobId}_${i}.wav`;
 
-      const filePath = await upload(wavFile, wavFile);
-      console.log("path ->", filePath);
-      // const presignedURL = await getPresignedURL(filePath);
-      // console.log("presigned url ->", presignedURL);
+        const chunkUrl = await upload(chunks[i], chunkKey);
 
-      const payload = {
-        jobId,
-        supabasePath: filePath,
-      };
-      console.log("chunk queue payload ->", payload);
+        const transcribePayload = {
+          jobId,
+          chunkIndex: i,
+          chunkUrl,
+        };
 
-      const result = await chunkQueue.add("job", payload);
-      console.log(`transcription ${result.id} added to chunk queue`);
+        console.log(`transcription queue payload ${transcribePayload}`);
+
+        const result = await transcriptionQueue.add("job", transcribePayload, {
+          attempts: 3,
+          backoff: {
+            type: "exponential",
+            delay: 5000,
+          },
+        });
+        console.log(`file ${result.id} added to transcription queue`);
+      }
     } catch (err) {
       console.log(err);
     } finally {
       if (wavFile && fs.existsSync(wavFile)) {
         fs.unlinkSync(wavFile);
-      }
-      if (mp3File && fs.existsSync(mp3File)) {
-        fs.unlinkSync(mp3File);
       }
     }
   },

@@ -28,8 +28,6 @@ const transcribe = async (req, res, next) => {
     const fileName = `${jobId}.${fileExt}`;
     const filePath = await upload(req.file, fileName);
     console.log("path ->", filePath);
-    // const presignedURL = await getPresignedURL(filePath);
-    // console.log("presigned url ->", presignedURL);
 
     const payload = {
       jobId,
@@ -38,6 +36,7 @@ const transcribe = async (req, res, next) => {
     console.log("download queue payload ->", payload);
 
     const result = await downloadQueue.add("job", payload);
+    console.log(`transcription ${result.id} added to download queue`);
     return res.status(200).json({
       status: true,
       message: `transcription ${result.id} added to download queue`,
