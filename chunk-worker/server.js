@@ -44,6 +44,8 @@ const worker = new Worker(
       const downloadedWavFile = await downloadFile(presignedUrl, wavFile);
       const chunks = await splitAudio(downloadedWavFile, jobId);
 
+      await connection.set(`job:${jobId}:totalChunks`, chunks.length);
+
       for (let i = 0; i < chunks.length; i++) {
         const chunkKey = `chunks/${jobId}_${i}.wav`;
 

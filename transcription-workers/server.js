@@ -49,16 +49,24 @@ const worker = new Worker(
       );
       console.log("text ->", text);
 
-      const aggregationPayload = {
-        jobId,
-        chunkIndex,
+      await connection.hset(
+        `job:${jobId}:chunks`,
+        chunkIndex.toString(), // Redis keys must be strings
         text,
-      };
+      );
+      const completed = await connection.hlen(`job:${jobId}:chunks`);
+      const total = await connection.get(`job:${jobId}:totalChunks`);
 
-      console.log(`aggregation queue payload ${aggregationPayload}`);
+      if (Number(completed) === Number(total)) {
+        console.log("All chunks done → triggering aggregation");
 
-      const result = await aggregationQueue.add("job", aggregationPayload);
-      console.log(`file ${result.id} added to aggregation queue`);
+        const aggregationPayload = {
+          jobId,
+        };
+        console.log(`aggregation queue payload ${aggregationPayload}`);
+        const result = await aggregationQueue.add("job", aggregationPayload);
+        console.log(`file ${result.id} added to aggregation queue`);
+      }
     } catch (err) {
       console.log(err);
     } finally {

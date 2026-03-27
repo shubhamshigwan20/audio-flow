@@ -9,3 +9,6 @@
 
 /transcription-workers/node_modules
 /transcription-workers/.env
+
+/aggregation-worker/node_modules
+/aggregation-worker/.env
