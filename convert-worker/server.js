@@ -81,7 +81,8 @@ const worker = new Worker(
       const result = await chunkQueue.add("job", payload);
       console.log(`transcription ${result.id} added to chunk queue`);
     } catch (err) {
-      console.log(err);
+      console.error(`[convert-worker] job ${job.data.jobId} failed:`, err);
+      throw err;
     } finally {
       if (wavFile && fs.existsSync(wavFile)) {
         fs.unlinkSync(wavFile);
@@ -91,7 +92,16 @@ const worker = new Worker(
       }
     }
   },
-  { connection },
+  {
+    connection,
+    defaultJobOptions: {
+      attempts: 5,
+      backoff: {
+        type: "exponential",
+        delay: 5000, // 1st retry after 5s, 2nd after 10s, 3rd after 20s
+      },
+    },
+  },
 );
 
 worker.on("completed", (job) => {
@@ -101,6 +111,9 @@ worker.on("completed", (job) => {
 worker.on("failed", (job, err) => {
   console.log(`job ${job.id} failed processing due to ${err}`);
 });
+
+process.on("SIGTERM", async () => await worker.close());
+process.on("SIGINT", async () => await worker.close());
 
 app.listen(PORT, () => {
   console.log(`server started on port ${PORT}`);
