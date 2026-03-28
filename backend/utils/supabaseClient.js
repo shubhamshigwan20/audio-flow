@@ -9,7 +9,7 @@ const FOLDER = process.env.SUPABASE_FOLDER;
 
 const supabase = createClient(PROJECT_URL, API_KEY);
 const upload = async (file, fileName) => {
-  if (!PROJECT_URL || !API_KEY || !BUCKET || !FOLDER || !file) {
+  if (!PROJECT_URL || !API_KEY || !BUCKET || !FOLDER || !file || !fileName) {
     return;
   }
   const { mimetype, path } = file;
@@ -53,16 +53,4 @@ const getPresignedURL = async (filePath) => {
   return data.signedUrl;
 };
 
-const deleteFile = async (req, res) => {
-  const { folder, filename } = req.body;
-  const data = await supabase.storage.from(BUCKET).remove([folder, filename]);
-
-  //   if (data) {
-  //     return res.status(200).json({
-  //       status: true,
-  //       message: data,
-  //     });
-  //   }
-};
-
-module.exports = { upload, getPresignedURL, deleteFile };
+module.exports = { upload, getPresignedURL };
