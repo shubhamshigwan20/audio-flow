@@ -62,7 +62,10 @@ function getAudioDuration(filePath) {
   });
 }
 
-async function splitAudio(inputPath, jobId, chunkDuration = 120) {
+async function splitAudio(fileObj, jobId, chunkDuration = 120) {
+  const inputPath = fileObj.path;
+  console.log("input path ->", inputPath);
+  console.log("file Obj ->", fileObj);
   const duration = await getAudioDuration(inputPath);
   console.log("split audio duration ->", duration);
 
@@ -72,10 +75,13 @@ async function splitAudio(inputPath, jobId, chunkDuration = 120) {
   let index = 0;
 
   const jobTempDir = path.join(os.tmpdir(), "audio_chunks", String(jobId));
+  console.log("temp job dir ->", jobTempDir);
+  const extWithDot = `.${fileObj.originalname.split(".").pop()}`; // ".mp3"
+  console.log("extension ->", extWithDot);
 
   while (start < duration) {
     await fs.ensureDir(jobTempDir);
-    const outputPath = path.join(jobTempDir, `chunk_${index}.mp3`);
+    const outputPath = path.join(jobTempDir, `chunk_${index}${extWithDot}`);
     console.log("split audio output path", outputPath);
 
     await new Promise((resolve, reject) => {
@@ -106,16 +112,21 @@ async function splitAudio(inputPath, jobId, chunkDuration = 120) {
 
 const processTranscribe = async (jobId, fileObj) => {
   console.log("file obj ->", fileObj);
-  const chunkDuration = await calculateDuration(fileObj);
+  const chunkDurationEnv = Number(process.env.CHUNK_DURATION);
+  const chunkDuration = chunkDurationEnv
+    ? chunkDurationEnv
+    : await calculateDuration(fileObj);
   console.log("chunk duration ->", chunkDuration);
-  const chunks = await splitAudio(fileObj.path, jobId, chunkDuration);
+  const chunks = await splitAudio(fileObj, jobId, chunkDuration);
   console.log("chunks ->", chunks);
   await connection.set(`job:${jobId}:totalChunks`, chunks.length);
+  const extWithDot = `.${fileObj.originalname.split(".").pop()}`; // ".mp3"
+  console.log("extension ->", extWithDot);
 
   for (let i = 0; i < chunks.length; i++) {
-    const chunkKey = `${jobId}_${i}.mp3`;
-
-    const chunkUrl = await upload(chunks[i], chunkKey);
+    const chunkKey = `${jobId}_${i}${extWithDot}`;
+    console.log(`chunk ${i} size ->`, chunks[i].length / (1024 * 1024));
+    const chunkUrl = await upload(chunks[i], chunkKey, fileObj.mimetype);
 
     const downloadPayload = {
       jobId,
@@ -136,4 +147,4 @@ const processTranscribe = async (jobId, fileObj) => {
   }
 };
 
-module.exports = { calculateDuration, splitAudio, processTranscribe };
+module.exports = { calculateDuration, processTranscribe };

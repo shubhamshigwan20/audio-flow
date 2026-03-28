@@ -31,24 +31,6 @@ const transcribe = async (req, res, next) => {
       .json({ status: true, message: "file uploaded success", jobId });
 
     setImmediate(() => processTranscribe(jobId, fileObj));
-
-    // const fileExt = path.extname(originalname).slice(1); // "mp3"
-    // const fileName = `${jobId}.${fileExt}`;
-    // const filePath = await upload(req.file, fileName);
-    // console.log("path ->", filePath);
-
-    // const payload = {
-    //   jobId,
-    //   supabasePath: filePath,
-    // };
-    // console.log("download queue payload ->", payload);
-
-    // const result = await downloadQueue.add("job", payload);
-    // console.log(`transcription ${result.id} added to download queue`);
-    // return res.status(200).json({
-    //   status: true,
-    //   message: `transcription ${result.id} added to download queue`,
-    // });
   } catch (err) {
     next(err);
   }

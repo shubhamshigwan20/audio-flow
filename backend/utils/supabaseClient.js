@@ -1,5 +1,4 @@
 require("dotenv").config();
-// const fs = require("fs/promises");
 const { createClient } = require("@supabase/supabase-js");
 
 const PROJECT_URL = process.env.SUPABASE_PROJECT_URL;
@@ -8,8 +7,9 @@ const BUCKET = process.env.SUPABASE_BUCKET;
 const FOLDER = process.env.SUPABASE_FOLDER;
 
 const supabase = createClient(PROJECT_URL, API_KEY);
-const upload = async (buffer, fileName) => {
-  if (!PROJECT_URL || !API_KEY || !BUCKET || !FOLDER || !fileName) {
+//buffer based upload function
+const upload = async (buffer, fileName, contentType) => {
+  if (!PROJECT_URL || !API_KEY || !BUCKET || !FOLDER || !fileName || !buffer) {
     return;
   }
   // const { mimetype, path } = file;
@@ -21,7 +21,7 @@ const upload = async (buffer, fileName) => {
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .upload(filePath, buffer, {
-      contentType: "audio/mpeg",
+      contentType,
       upsert: false,
     });
   console.log("data ->", data);
