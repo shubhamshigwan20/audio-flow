@@ -38,8 +38,8 @@ async function splitAudio(inputPath, jobId) {
   const duration = await getAudioDuration(inputPath);
   console.log("split audio duration ->", duration);
 
-  const CHUNK_DURATION = 30; // seconds
-  const OVERLAP = 3; // seconds
+  const CHUNK_DURATION = Number(process.env.CHUNK_DURATION) || 30; // seconds
+  const OVERLAP = Number(process.env.CHUNK_OVERLAP) || 3; // seconds
 
   const chunks = [];
 

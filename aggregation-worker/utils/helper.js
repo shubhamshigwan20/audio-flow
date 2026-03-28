@@ -16,7 +16,7 @@ async function getAllChunkResults(jobId) {
 }
 
 function findOverlap(prevText, currentText) {
-  const MAX_WINDOW = 50; // words
+  const MAX_WINDOW = process.env.MAX_WINDOW || 50; // words
 
   console.log("prev text ->", prevText);
   console.log("current text ->", currentText);

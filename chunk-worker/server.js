@@ -65,7 +65,7 @@ const worker = new Worker(
       await connection.set(`job:${jobId}:totalChunks`, chunks.length);
 
       for (let i = 0; i < chunks.length; i++) {
-        const chunkKey = `chunks/${jobId}_${i}.wav`;
+        const chunkKey = `${jobId}_${i}.wav`;
 
         const chunkUrl = await upload(chunks[i], chunkKey);
 

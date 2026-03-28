@@ -42,16 +42,4 @@ const getPresignedURL = async (filePath) => {
   return data.signedUrl;
 };
 
-const deleteFile = async (req, res) => {
-  const { folder, filename } = req.body;
-  const data = await supabase.storage.from(BUCKET).remove([folder, filename]);
-
-  //   if (data) {
-  //     return res.status(200).json({
-  //       status: true,
-  //       message: data,
-  //     });
-  //   }
-};
-
-module.exports = { upload, getPresignedURL, deleteFile };
+module.exports = { upload, getPresignedURL };
