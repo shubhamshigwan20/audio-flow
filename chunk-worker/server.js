@@ -5,7 +5,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const fs = require("fs");
 const { Worker } = require("bullmq");
-const { connection, transcriptionQueue } = require("./utils/queue");
+const { connection, transcriptionQueue, chunkQueue } = require("./utils/queue");
 const { upload, getPresignedURL } = require("./utils/supabaseClient");
 const { downloadFile, splitAudio } = require("./utils/helper");
 
@@ -27,6 +27,24 @@ app.get("/health", (req, res) => {
   return res.status(200).json({
     status: true,
   });
+});
+
+app.get("/queue-status", async (req, res) => {
+  try {
+    const [waiting, active] = await Promise.all([
+      chunkQueue.getWaitingCount(),
+      chunkQueue.getActiveCount(),
+    ]);
+    return res.status(200).json({
+      status: true,
+      queue: "chunk",
+      waiting,
+      active,
+      busy: waiting > 0 || active > 0,
+    });
+  } catch (err) {
+    return res.status(500).json({ status: false, error: err.message });
+  }
 });
 
 const worker = new Worker(

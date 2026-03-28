@@ -4,7 +4,7 @@ const app = express();
 const helmet = require("helmet");
 const cors = require("cors");
 const { Worker } = require("bullmq");
-const { connection } = require("./utils/queue");
+const { connection, aggregationQueue } = require("./utils/queue");
 const {
   getAllChunkResults,
   mergeWithOverlapHandling,
@@ -28,6 +28,24 @@ app.get("/health", (req, res) => {
   return res.status(200).json({
     status: true,
   });
+});
+
+app.get("/queue-status", async (req, res) => {
+  try {
+    const [waiting, active] = await Promise.all([
+      aggregationQueue.getWaitingCount(),
+      aggregationQueue.getActiveCount(),
+    ]);
+    return res.status(200).json({
+      status: true,
+      queue: "aggregation",
+      waiting,
+      active,
+      busy: waiting > 0 || active > 0,
+    });
+  } catch (err) {
+    return res.status(500).json({ status: false, error: err.message });
+  }
 });
 
 const worker = new Worker(

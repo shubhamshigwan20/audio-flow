@@ -11,5 +11,6 @@ const connection = new Redis({
 });
 
 const transcriptionQueue = new Queue("transcription", { connection });
+const chunkQueue = new Queue("chunk", { connection });
 
-module.exports = { transcriptionQueue, connection };
+module.exports = { transcriptionQueue, connection, chunkQueue };

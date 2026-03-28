@@ -5,7 +5,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const app = express();
-const { connection, chunkQueue } = require("./utils/queue");
+const { connection, chunkQueue, downloadQueue } = require("./utils/queue");
 const { getPresignedURL } = require("./utils/supabaseClient");
 const { downloadMp3, convertMp3ToWav } = require("./utils/helper");
 const { upload } = require("./utils/supabaseClient");
@@ -27,6 +27,24 @@ app.get("/health", (req, res) => {
   return res.status(200).json({
     status: true,
   });
+});
+
+app.get("/queue-status", async (req, res) => {
+  try {
+    const [waiting, active] = await Promise.all([
+      downloadQueue.getWaitingCount(),
+      downloadQueue.getActiveCount(),
+    ]);
+    return res.status(200).json({
+      status: true,
+      queue: "download",
+      waiting,
+      active,
+      busy: waiting > 0 || active > 0,
+    });
+  } catch (err) {
+    return res.status(500).json({ status: false, error: err.message });
+  }
 });
 
 const worker = new Worker(

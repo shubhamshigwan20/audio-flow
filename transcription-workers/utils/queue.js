@@ -11,5 +11,6 @@ const connection = new Redis({
 });
 
 const aggregationQueue = new Queue("aggregation", { connection });
+const transcriptionQueue = new Queue("transcription", { connection });
 
-module.exports = { aggregationQueue, connection };
+module.exports = { aggregationQueue, connection, transcriptionQueue };

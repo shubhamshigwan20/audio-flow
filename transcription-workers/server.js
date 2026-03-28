@@ -4,7 +4,11 @@ const app = express();
 const helmet = require("helmet");
 const cors = require("cors");
 const { Worker } = require("bullmq");
-const { connection, aggregationQueue } = require("./utils/queue");
+const {
+  connection,
+  aggregationQueue,
+  transcriptionQueue,
+} = require("./utils/queue");
 const { getPresignedURL } = require("./utils/supabaseClient");
 const groqTranscribe = require("./utils/groqStt");
 
@@ -26,6 +30,24 @@ app.get("/health", (req, res) => {
   return res.status(200).json({
     status: true,
   });
+});
+
+app.get("/queue-status", async (req, res) => {
+  try {
+    const [waiting, active] = await Promise.all([
+      transcriptionQueue.getWaitingCount(),
+      transcriptionQueue.getActiveCount(),
+    ]);
+    return res.status(200).json({
+      status: true,
+      queue: "transcription",
+      waiting,
+      active,
+      busy: waiting > 0 || active > 0,
+    });
+  } catch (err) {
+    return res.status(500).json({ status: false, error: err.message });
+  }
 });
 
 const worker = new Worker(

@@ -10,5 +10,6 @@ const connection = new Redis({
 });
 
 const chunkQueue = new Queue("chunk", { connection });
+const downloadQueue = new Queue("download", { connection });
 
-module.exports = { chunkQueue, connection };
+module.exports = { chunkQueue, connection, downloadQueue };
