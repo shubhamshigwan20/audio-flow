@@ -50,36 +50,37 @@ app.get("/queue-status", async (req, res) => {
 const worker = new Worker(
   "download",
   async (job) => {
-    let mp3File;
+    let inputFile;
     let wavFile;
     try {
       const jobId = job.data.jobId;
-      const supabasePath = job.data.supabasePath;
+      const chunkIndex = job.data.chunkIndex;
+      const chunkUrl = job.data.chunkUrl;
       console.log("job id ->", jobId);
-      console.log("job name ->", supabasePath);
+      console.log("chunk index", chunkIndex);
+      console.log("chunk url ->", chunkUrl);
 
-      mp3File = `${jobId}.mp3`;
-      wavFile = `${jobId}.wav`;
-      const presignedUrl = await getPresignedURL(supabasePath);
-      await downloadMp3(presignedUrl, mp3File);
-      await convertMp3ToWav(mp3File, wavFile);
+      const extWithDot = `.${chunkUrl.split(".").pop()}`; // ".mp3"
+      console.log("extension ->", extWithDot);
 
-      // const fileExt = path.extname(originalname).slice(1); // "mp3"
-      // const fileName = `${jobId}.${fileExt}`;
+      inputFile = `${jobId}_${chunkIndex}${extWithDot}`;
+      wavFile = `${jobId}_${chunkIndex}.wav`;
+      const presignedUrl = await getPresignedURL(chunkUrl);
+      await downloadMp3(presignedUrl, inputFile);
+      await convertMp3ToWav(inputFile, wavFile);
 
       const filePath = await upload(wavFile, wavFile);
       console.log("path ->", filePath);
-      // const presignedURL = await getPresignedURL(filePath);
-      // console.log("presigned url ->", presignedURL);
 
       const payload = {
         jobId,
-        supabasePath: filePath,
+        chunkIndex,
+        chunkUrl: filePath,
       };
       console.log("chunk queue payload ->", payload);
 
       const result = await chunkQueue.add("job", payload);
-      console.log(`transcription ${result.id} added to chunk queue`);
+      console.log(`data ${result.id} added to chunk queue`);
     } catch (err) {
       console.error(`[convert-worker] job ${job.data.jobId} failed:`, err);
       throw err;
@@ -87,8 +88,8 @@ const worker = new Worker(
       if (wavFile && fs.existsSync(wavFile)) {
         fs.unlinkSync(wavFile);
       }
-      if (mp3File && fs.existsSync(mp3File)) {
-        fs.unlinkSync(mp3File);
+      if (inputFile && fs.existsSync(inputFile)) {
+        fs.unlinkSync(inputFile);
       }
     }
   },
