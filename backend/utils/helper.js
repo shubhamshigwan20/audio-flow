@@ -119,7 +119,7 @@ const processTranscribe = async (jobId, fileObj) => {
   console.log("chunk duration ->", chunkDuration);
   const chunks = await splitAudio(fileObj, jobId, chunkDuration);
   console.log("chunks ->", chunks);
-  await connection.set(`job:${jobId}:totalChunks`, chunks.length);
+  await connection.set(`job:${jobId}:totalInitialChunks`, chunks.length);
   const extWithDot = `.${fileObj.originalname.split(".").pop()}`; // ".mp3"
   console.log("extension ->", extWithDot);
 

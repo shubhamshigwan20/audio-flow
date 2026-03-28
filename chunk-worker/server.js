@@ -53,25 +53,36 @@ const worker = new Worker(
     let wavFile;
     try {
       const jobId = job.data.jobId;
-      const supabasePath = job.data.supabasePath;
+      const chunkIndex = job.data.chunkIndex;
+      const chunkUrl = job.data.chunkUrl;
       console.log("job id ->", jobId);
-      console.log("job name ->", supabasePath);
+      console.log("chunk index ->", chunkIndex);
+      console.log("chunk url ->", chunkUrl);
 
       wavFile = `${jobId}.wav`;
-      const presignedUrl = await getPresignedURL(supabasePath);
+      const presignedUrl = await getPresignedURL(chunkUrl);
       const downloadedWavFile = await downloadFile(presignedUrl, wavFile);
       const chunks = await splitAudio(downloadedWavFile, jobId);
 
-      await connection.set(`job:${jobId}:totalChunks`, chunks.length);
+      let currentChunks = await connection.get(
+        `job:${jobId}:totalCurrentChunks`,
+      );
+      if (!currentChunks) currentChunks = 0;
+      console.log("currentChunks", currentChunks);
+      const afterAdd = await connection.set(
+        `job:${jobId}:totalCurrentChunks`,
+        chunks.length + currentChunks,
+      );
+      console.log("after add ->", afterAdd);
 
       for (let i = 0; i < chunks.length; i++) {
-        const chunkKey = `${jobId}_${i}.wav`;
+        const chunkKey = `${jobId}_${i + currentChunks}.wav`;
 
         const chunkUrl = await upload(chunks[i], chunkKey);
 
         const transcribePayload = {
           jobId,
-          chunkIndex: i,
+          chunkIndex: i + currentChunks,
           chunkUrl,
         };
 

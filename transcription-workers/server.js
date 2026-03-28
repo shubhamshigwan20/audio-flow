@@ -77,7 +77,9 @@ const worker = new Worker(
         text,
       );
       const completed = await connection.hlen(`job:${jobId}:chunks`);
-      const total = await connection.get(`job:${jobId}:totalChunks`);
+      console.log("completed chunks ->", completed);
+      const total = await connection.get(`job:${jobId}:totalCurrentChunks`);
+      console.log("total chunks ->", total);
 
       if (Number(completed) === Number(total)) {
         console.log("All chunks done → triggering aggregation");

@@ -7,7 +7,11 @@ const cors = require("cors");
 const app = express();
 const { connection, chunkQueue, downloadQueue } = require("./utils/queue");
 const { getPresignedURL } = require("./utils/supabaseClient");
-const { downloadMp3, convertMp3ToWav } = require("./utils/helper");
+const {
+  downloadMp3,
+  convertMp3ToWav,
+  getFileSizeBytes,
+} = require("./utils/helper");
 const { upload } = require("./utils/supabaseClient");
 const PORT = process.env.PORT || 80;
 
@@ -68,6 +72,9 @@ const worker = new Worker(
       const presignedUrl = await getPresignedURL(chunkUrl);
       await downloadMp3(presignedUrl, inputFile);
       await convertMp3ToWav(inputFile, wavFile);
+
+      const sizeBytes = await getFileSizeBytes(wavFile);
+      console.log("wav file size ->", sizeBytes / (1024 * 1024));
 
       const filePath = await upload(wavFile, wavFile);
       console.log("path ->", filePath);

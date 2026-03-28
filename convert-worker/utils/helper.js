@@ -1,6 +1,14 @@
 const axios = require("axios");
 const fs = require("fs");
 const ffmpeg = require("fluent-ffmpeg");
+
+const fsPromises = require("fs/promises");
+
+async function getFileSizeBytes(filePath) {
+  const stats = await fsPromises.stat(filePath);
+  return stats.size; // bytes
+}
+
 async function downloadMp3(url, outputPath) {
   const response = await axios({
     method: "GET",
@@ -37,4 +45,4 @@ function convertMp3ToWav(input, output) {
   });
 }
 
-module.exports = { downloadMp3, convertMp3ToWav };
+module.exports = { downloadMp3, convertMp3ToWav, getFileSizeBytes };
