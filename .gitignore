@@ -13,4 +13,8 @@
 /aggregation-worker/node_modules
 /aggregation-worker/.env
 
+/cf-gateway/.wrangler
+/cf-gateway/node_modules
+/cf-gateway/wrangler.toml
+
 logs.txt
