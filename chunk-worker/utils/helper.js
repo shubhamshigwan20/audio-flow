@@ -79,4 +79,8 @@ async function splitAudio(inputPath, jobId) {
   return chunks;
 }
 
-module.exports = { downloadFile, splitAudio, getAudioDuration };
+module.exports = {
+  downloadFile,
+  splitAudio,
+  getAudioDuration,
+};
