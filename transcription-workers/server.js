@@ -87,8 +87,13 @@ const worker = new Worker(
         const aggregationPayload = {
           jobId,
         };
-        console.log(`aggregation queue payload ${aggregationPayload}`);
-        const result = await aggregationQueue.add("job", aggregationPayload);
+        console.log(
+          `aggregation queue payload ${JSON.stringify(aggregationPayload)}`,
+        );
+        const result = await aggregationQueue.add("job", aggregationPayload, {
+          removeOnComplete: 5, // keep last 100
+          removeOnFail: 2,
+        });
         console.log(`file ${result.id} added to aggregation queue`);
       }
     } catch (err) {

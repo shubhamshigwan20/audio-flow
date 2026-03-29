@@ -71,7 +71,7 @@ const worker = new Worker(
       console.log("currentChunks", currentChunks);
       const afterAdd = await connection.set(
         `job:${jobId}:totalCurrentChunks`,
-        chunks.length + currentChunks,
+        chunks.length + Number(currentChunks),
       );
       console.log("after add ->", afterAdd);
 
@@ -86,10 +86,14 @@ const worker = new Worker(
           chunkUrl,
         };
 
-        console.log(`transcription queue payload ${transcribePayload}`);
+        console.log(
+          `transcription queue payload ${JSON.stringify(transcribePayload)}`,
+        );
 
         const result = await transcriptionQueue.add("job", transcribePayload, {
           attempts: 3,
+          removeOnComplete: 5, // keep last 100
+          removeOnFail: 2,
           backoff: {
             type: "exponential",
             delay: 5000,

@@ -86,7 +86,10 @@ const worker = new Worker(
       };
       console.log("chunk queue payload ->", payload);
 
-      const result = await chunkQueue.add("job", payload);
+      const result = await chunkQueue.add("job", payload, {
+        removeOnComplete: 5, // keep last 100
+        removeOnFail: 2,
+      });
       console.log(`data ${result.id} added to chunk queue`);
     } catch (err) {
       console.error(`[convert-worker] job ${job.data.jobId} failed:`, err);

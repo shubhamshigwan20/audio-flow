@@ -134,10 +134,12 @@ const processTranscribe = async (jobId, fileObj) => {
       chunkUrl,
     };
 
-    console.log(`download queue payload ${downloadPayload}`);
+    console.log(`download queue payload ${JSON.stringify(downloadPayload)}`);
 
     const result = await downloadQueue.add("job", downloadPayload, {
       attempts: 3,
+      removeOnComplete: 5, // keep last 100
+      removeOnFail: 2,
       backoff: {
         type: "exponential",
         delay: 5000,
