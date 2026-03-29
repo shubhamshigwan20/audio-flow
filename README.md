@@ -32,30 +32,30 @@ The core problem solved: most speech-to-text APIs and storage providers cap requ
 
 ```mermaid
 flowchart LR
-  U[Client] -->|POST /transcribe| CF[Cloudflare Worker Gateway]
-  CF -->|wake + proxy| BE[Backend API (Render)]
+  U["Client"] -->|POST /transcribe| CF["Cloudflare Worker Gateway"]
+  CF -->|wake + proxy| BE["Backend API (Render)"]
 
-  BE -->|upload chunks| SB[(Supabase Storage)]
-  BE -->|enqueue download| R[(Redis + BullMQ)]
+  BE -->|upload chunks| SB[("Supabase Storage")]
+  BE -->|enqueue download| R[("Redis + BullMQ")]
 
-  R -->|download queue| CW[Convert Worker (Render)]
+  R -->|download queue| CW["Convert Worker (Render)"]
   CW -->|download| SB
   CW -->|convert to WAV| CW
   CW -->|upload WAV| SB
   CW -->|enqueue chunk| R
 
-  R -->|chunk queue| CHW[Chunk Worker (Render)]
+  R -->|chunk queue| CHW["Chunk Worker (Render)"]
   CHW -->|download WAV| SB
   CHW -->|split w/ overlap| CHW
   CHW -->|upload chunks| SB
   CHW -->|enqueue transcription| R
 
-  R -->|transcription queue| TW[Transcription Workers (Render)]
-  TW -->|Groq Whisper| G[Groq Whisper API]
+  R -->|transcription queue| TW["Transcription Workers (Render)"]
+  TW -->|Groq Whisper| G["Groq Whisper API"]
   TW -->|store chunk text| R
 
-  R -->|aggregation queue| AW[Aggregation Worker (Render)]
-  AW -->|merge| OUT[Final Transcript]
+  R -->|aggregation queue| AW["Aggregation Worker (Render)"]
+  AW -->|merge| OUT["Final Transcript"]
 ```
 
 ## Tech Stack
