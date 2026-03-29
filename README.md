@@ -1,138 +1,162 @@
-# Multistage Transcription Pipeline
-Queue-driven audio transcription system that uploads audio, converts and chunks it, runs speech-to-text, and aggregates the final transcript.
+# Free-Tier Transcription Orchestrator
 
-**Overview**
-This project solves the challenge of reliably transcribing long audio files by breaking them into manageable chunks and processing them with a distributed worker pipeline.
+## Overview
 
-Key features:
-- Multipart upload API that accepts audio files and enqueues jobs
-- Multi-stage pipeline: download and convert, chunk, transcribe, aggregate
-- Redis-backed queues with BullMQ for reliability and retries
-- Supabase Storage integration for audio assets
-- Groq Whisper-based transcription for each chunk
-- Overlap-aware text merging to reduce repeated words
+This project is a scalable, multi-stage **audio** transcription pipeline built to handle large files within free-tier limits. It breaks big uploads into smaller chunks, processes them asynchronously across worker services, and merges results into a final transcript. It also mitigates cold starts by routing requests through a Cloudflare Worker that wakes Render services before jobs begin.
 
-**Architecture Overview**
-At a high level, a client uploads audio to the backend API, which stores the file in Supabase and enqueues a job in Redis. Workers pull jobs from queues and process the audio in stages, storing intermediate results back to Supabase and Redis. The final transcript is assembled in the aggregation stage.
+The core problem solved: most speech-to-text APIs and storage providers cap request sizes. This pipeline reliably transcribes long recordings by staging, chunking, and coordinating work across small, commodity hardware.
 
-Data flow step-by-step:
-1. Client uploads an audio file to `POST /transcribe`.
-2. Backend stores the raw file in Supabase Storage and enqueues a `download` job.
-3. Convert worker downloads the file, converts it to WAV, uploads it, and enqueues a `chunk` job.
-4. Chunk worker downloads the WAV, splits it into overlapping chunks, uploads chunks, and enqueues `transcription` jobs.
-5. Transcription workers fetch each chunk, call Groq Whisper, and store chunk text in Redis.
-6. Aggregation worker reads all chunk texts from Redis, merges overlaps, and produces the final transcript.
+## Features
 
-**Architecture Diagram**
+- Large-file ingestion with asynchronous job handling
+- Size-based pre-chunking to respect Supabase (storage) and Groq Whisper (request) limits
+- Audio normalization (mono, 16kHz WAV) before fine-grained chunking
+- Overlap-aware chunking for better transcript continuity
+- Redis + BullMQ queues with retries and backoff
+- Cloudflare Worker gateway to wake sleeping Render services
+- Supabase Storage integration for intermediate artifacts
+
+## Architecture Explanation
+
+1. **File upload**: Client sends `POST /transcribe` to the Cloudflare gateway or directly to the backend.
+2. **Initial chunking**: Backend splits the raw audio into size-safe chunks (based on `SUPABASE_MAX_MB` and `WHISPER_MAX_MB`).
+3. **Storage**: Each chunk is uploaded to Supabase Storage.
+4. **Worker orchestration**: Backend enqueues jobs in Redis/BullMQ (`download` queue).
+5. **Cold-start handling**: Cloudflare Worker wakes Render services and keeps them warm while jobs are active.
+6. **Conversion**: Convert worker downloads each chunk, converts to mono 16kHz WAV, uploads to Supabase.
+7. **Fine chunking**: Chunk worker splits WAV into overlapping time-based chunks and enqueues transcription jobs.
+8. **Transcription**: Transcription workers call Groq Whisper and store results in Redis.
+9. **Aggregation**: Aggregation worker merges chunk text with overlap handling into the final transcript.
+
+## Architecture Diagram
+
 ```mermaid
 flowchart LR
-  subgraph Client
-    U[User / Client]
-  end
+  U[Client] -->|POST /transcribe| CF[Cloudflare Worker Gateway]
+  CF -->|wake + proxy| BE[Backend API (Render)]
 
-  subgraph API
-    B[Backend API]
-  end
+  BE -->|upload chunks| SB[(Supabase Storage)]
+  BE -->|enqueue download| R[(Redis + BullMQ)]
 
-  subgraph QueueDB
-    R[(Redis: BullMQ + Job State)]
-  end
+  R -->|download queue| CW[Convert Worker (Render)]
+  CW -->|download| SB
+  CW -->|convert to WAV| CW
+  CW -->|upload WAV| SB
+  CW -->|enqueue chunk| R
 
-  subgraph Storage
-    S[(Supabase Storage)]
-  end
+  R -->|chunk queue| CHW[Chunk Worker (Render)]
+  CHW -->|download WAV| SB
+  CHW -->|split w/ overlap| CHW
+  CHW -->|upload chunks| SB
+  CHW -->|enqueue transcription| R
 
-  subgraph Workers
-    CW[Convert Worker]
-    HW[Chunk Worker]
-    TW[Transcription Workers]
-    AW[Aggregation Worker]
-  end
+  R -->|transcription queue| TW[Transcription Workers (Render)]
+  TW -->|Groq Whisper| G[Groq Whisper API]
+  TW -->|store chunk text| R
 
-  subgraph External
-    G[Groq Whisper API]
-    F[FFmpeg]
-  end
-
-  U -- "HTTP Upload" --> B
-  B -- "Store audio" --> S
-  B -- "Enqueue download job" --> R
-
-  R -- "download queue" --> CW
-  CW -- "Download audio" --> S
-  CW -- "Convert to WAV" --> F
-  CW -- "Upload WAV" --> S
-  CW -- "Enqueue chunk job" --> R
-
-  R -- "chunk queue" --> HW
-  HW -- "Download WAV" --> S
-  HW -- "Split into chunks" --> F
-  HW -- "Upload chunks" --> S
-  HW -- "Enqueue transcription jobs" --> R
-
-  R -- "transcription queue" --> TW
-  TW -- "Download chunk" --> S
-  TW -- "Transcribe audio" --> G
-  TW -- "Store partial text" --> R
-
-  R -- "aggregation queue" --> AW
-  AW -- "Read chunk texts" --> R
-  AW -- "Final transcript" --> B
+  R -->|aggregation queue| AW[Aggregation Worker (Render)]
+  AW -->|merge| OUT[Final Transcript]
 ```
 
-**Component Breakdown**
+## Tech Stack
+
 Frontend:
-- Not included in this repo. Any client can call the backend API to submit audio files.
+
+- Not included in this repo (any HTTP client or React app can call the API)
 
 Backend:
-- `backend/` handles uploads and enqueues the initial job.
-- `convert-worker/`, `chunk-worker/`, `transcription-workers/`, and `aggregation-worker/` process jobs in sequence.
 
-Database:
-- Redis stores queues and short-lived job state.
-- Supabase Storage stores raw audio, WAV files, and chunks.
-
-Third-party integrations:
-- Groq Whisper API for speech-to-text.
-- FFmpeg for audio conversion and chunking.
-
-**Tech Stack**
 - Node.js (CommonJS)
 - Express
-- BullMQ + Redis
-- Supabase Storage (`@supabase/supabase-js`)
-- Groq SDK (`groq-sdk`)
-- FFmpeg (`fluent-ffmpeg`)
-- Multer (multipart uploads)
-- Axios
 
-**Installation**
-Prerequisites:
-- Node.js 18+ (or a recent LTS)
-- Redis instance reachable by all services
-- FFmpeg installed and available on `PATH`
+Infrastructure:
+
+- Redis + BullMQ (queues and job state)
+- Supabase Storage (audio chunks)
+- Cloudflare Workers (gateway + cron pinger)
+- Render (worker services with auto-sleep)
+- FFmpeg (conversion + chunking)
+
+APIs:
+
+- Groq Whisper (speech-to-text)
+
+## Deployment Stack
+
+- **Supabase (Free Tier)**: Stores raw chunks and WAV segments.
+- **Cloudflare Workers**: Acts as a gateway, wakes Render services, and keeps them warm while jobs run.
+- **Render (Free Tier)**: Hosts the backend and worker services that can sleep when idle.
+- **Groq Whisper API (Free Tier)**: Performs transcription for each chunk.
+
+## Setup Instructions
+
+### Prerequisites
+
+- Node.js 18+ (or current LTS)
+- Redis instance accessible by all services
+- FFmpeg installed and on `PATH`
 - Supabase project + storage bucket
-- Groq API key (for transcription workers)
+- Groq API key
 
-Steps:
-1. Install dependencies for each service.
+### Install Dependencies
+
 ```bash
 cd backend && npm install
 cd ../convert-worker && npm install
 cd ../chunk-worker && npm install
 cd ../transcription-workers && npm install
 cd ../aggregation-worker && npm install
+cd ../cf-gateway && npm install
 ```
-2. Create environment files.
-Create `backend/.env` (based on `backend/.env.example`).
-Create `convert-worker/.env` (based on `convert-worker/.env.example`).
-Create `chunk-worker/.env`.
-Create `transcription-workers/.env`.
-Create `aggregation-worker/.env`.
-3. Ensure Redis and Supabase are configured and reachable.
 
-**Usage**
-Run each service in its own terminal:
+### Environment Variables
+
+Create `.env` files for each service (use the `*.env.example` files where available).
+
+Common (backend + workers):
+
+- `REDIS_HOST`
+- `REDIS_PORT`
+- `REDIS_USERNAME`
+- `REDIS_PASSWORD`
+- `PORT`
+- `SUPABASE_PROJECT_URL`
+- `SUPABASE_API_KEY`
+- `SUPABASE_BUCKET`
+- `SUPABASE_FOLDER`
+
+Backend only:
+
+- `SUPABASE_MAX_MB` (optional, default 50)
+- `WHISPER_MAX_MB` (optional, default 25)
+- `CHUNK_DURATION` (optional, overrides computed duration)
+
+Chunk worker only:
+
+- `CHUNK_DURATION` (optional, default 30 seconds)
+- `CHUNK_OVERLAP` (optional, default 3 seconds)
+
+Transcription workers only:
+
+- `GROQ_API_KEY`
+
+Aggregation worker only:
+
+- `MAX_WINDOW` (optional, overlap window in words; default 50)
+
+Cloudflare Worker (`cf-gateway/wrangler.toml`):
+
+- `BACKEND_URL`
+- `CONVERT_WORKER_URL`
+- `CHUNK_WORKER_URL`
+- `TRANSCRIPTION_WORKER_URL`
+- `AGGREGATION_WORKER_URL`
+- `JOB_STATE` KV binding
+
+### Run Locally
+
+Start each service in its own terminal:
+
 ```bash
 cd backend && npm run dev
 cd ../convert-worker && npm run dev
@@ -141,57 +165,34 @@ cd ../transcription-workers && npm run dev
 cd ../aggregation-worker && npm run dev
 ```
 
-Example API call (multipart upload):
+For the Cloudflare gateway:
+
+```bash
+cd cf-gateway && npm run dev
+```
+
+## Usage
+
+1. Send an audio file to `POST /transcribe` (gateway or backend).
+2. The API returns `202 Accepted` with a `jobId`.
+3. Workers process the job asynchronously.
+
+Note: In the current implementation, the final transcript is produced by the aggregation worker and logged, but it is not persisted or returned by an API endpoint yet.
+
+Example:
+
 ```bash
 curl -X POST http://localhost:<PORT>/transcribe \
   -F "file=@/path/to/audio.mp3"
 ```
 
-**Project Structure**
-- `backend/` REST API for uploads and job creation
-- `convert-worker/` converts uploaded audio to WAV and enqueues chunking
-- `chunk-worker/` splits WAV into overlapping chunks and enqueues transcription
-- `transcription-workers/` transcribes each chunk via Groq and stores results in Redis
-- `aggregation-worker/` merges chunk texts into final transcript
-- `storage/` placeholder for local assets (currently empty)
+## Demo
 
-**Environment Variables**
-Common (all services):
-- `REDIS_HOST` Redis host
-- `REDIS_PORT` Redis port
-- `REDIS_USERNAME` Redis username
-- `REDIS_PASSWORD` Redis password
-- `PORT` Service HTTP port (defaults to `80` if not set)
+Demo URL: <ADD_YOUR_DEPLOYED_LINK_HERE>
 
-Supabase (backend, convert-worker, chunk-worker, transcription-workers):
-- `SUPABASE_API_KEY` Supabase service key
-- `SUPABASE_PROJECT_URL` Supabase project URL
-- `SUPABASE_BUCKET` Storage bucket name
-- `SUPABASE_FOLDER` Folder prefix for stored files
+## Future Improvements
 
-Transcription workers only:
-- `GROQ_API_KEY` Groq API key used by `groq-sdk`
-
-**API Endpoints**
-Backend service:
-- `GET /` Health info and service metadata
-- `GET /health` Simple health check
-- `POST /transcribe` Upload an audio file and enqueue the transcription pipeline
-
-Worker services (convert, chunk, transcription, aggregation):
-- `GET /` Health info and service metadata
-- `GET /health` Simple health check
-
-**Future Improvements**
-- Persist final transcripts to Supabase/Postgres
-- Add job status endpoint (`/jobs/:id`)
-- Add authentication and rate limiting
-- Centralized logging and metrics
-
-**Contributing**
-1. Fork the repo and create a feature branch.
-2. Keep changes focused and add tests where appropriate.
-3. Open a PR with a clear description of your changes.
-
-**License**
-ISC
+- Durable job status and results API (`/jobs/:id`)
+- Queue-backed retries with dead-lettering (BullMQ, Kafka, etc.)
+- Persist final transcripts to a database
+- UI/UX improvements for uploads and job tracking
