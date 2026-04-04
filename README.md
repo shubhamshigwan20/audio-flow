@@ -188,7 +188,7 @@ curl -X POST http://localhost:<PORT>/transcribe \
 
 ## Demo
 
-Demo URL: <ADD_YOUR_DEPLOYED_LINK_HERE>
+Demo URL: https://transcription-gateway.shubhamshigwan20.workers.dev/
 
 ## Future Improvements
 
