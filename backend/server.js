@@ -13,6 +13,7 @@ app.get("/", (req, res) => {
     status: true,
     service: "backend",
     timestamp: new Date().toISOString(),
+    message: "check README.md file for usage instructions"
   });
 });
 

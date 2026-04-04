@@ -16,6 +16,10 @@ The core problem solved: most speech-to-text APIs and storage providers cap requ
 - Cloudflare Worker gateway to wake sleeping Render services
 - Supabase Storage integration for intermediate artifacts
 
+## Demo
+
+Demo URL: https://transcription-gateway.shubhamshigwan20.workers.dev/
+
 ## Architecture Explanation
 
 1. **File upload**: Client sends `POST /transcribe` to the Cloudflare gateway or directly to the backend.
@@ -186,13 +190,4 @@ curl -X POST http://localhost:<PORT>/transcribe \
   -F "file=@/path/to/audio.mp3"
 ```
 
-## Demo
 
-Demo URL: https://transcription-gateway.shubhamshigwan20.workers.dev/
-
-## Future Improvements
-
-- Durable job status and results API (`/jobs/:id`)
-- Queue-backed retries with dead-lettering (BullMQ, Kafka, etc.)
-- Persist final transcripts to a database
-- UI/UX improvements for uploads and job tracking
