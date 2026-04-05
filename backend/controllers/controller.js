@@ -1,6 +1,12 @@
 const { v4: uuid } = require("uuid");
+const fs = require("fs-extra");
+const db = require("../db/db");
 const { processTranscribe } = require("../utils/helper");
-const { fromFile } = require("file-type");
+
+async function detectFileType(filePath) {
+  const { fileTypeFromFile } = await import("file-type");
+  return fileTypeFromFile(filePath);
+}
 
 const ALLOWED_AUDIO_TYPES = new Set([
   "audio/mpeg", // .mp3
@@ -28,7 +34,7 @@ const transcribe = async (req, res, next) => {
 
     console.log("req file -> ", fileObj);
 
-    const detected = await fromFile(fileObj.path);
+    const detected = await detectFileType(fileObj.path);
 
     if (!detected || !ALLOWED_AUDIO_TYPES.has(detected.mime)) {
       // Clean up the file before rejecting

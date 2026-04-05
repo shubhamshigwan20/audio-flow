@@ -6,6 +6,14 @@ const os = require("os");
 const { downloadQueue, connection } = require("./queue");
 const { upload } = require("./supabaseClient");
 
+if (process.env.FFMPEG_PATH) {
+  ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
+}
+
+if (process.env.FFPROBE_PATH) {
+  ffmpeg.setFfprobePath(process.env.FFPROBE_PATH);
+}
+
 function ffprobeAsync(filePath) {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
