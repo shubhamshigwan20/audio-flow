@@ -1,8 +1,7 @@
 const router = require("express").Router();
-const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
 const { transcribe } = require("../controllers/controller");
+const { fileUploadHandler } = require("../middleware/fileUpload.middleware");
 
-router.post("/transcribe", upload.single("file"), transcribe);
+router.post("/transcribe", fileUploadHandler(), transcribe);
 
 module.exports = router;
