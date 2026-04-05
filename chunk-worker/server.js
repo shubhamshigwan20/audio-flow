@@ -64,16 +64,11 @@ const worker = new Worker(
       const downloadedWavFile = await downloadFile(presignedUrl, wavFile);
       const chunks = await splitAudio(downloadedWavFile, jobId);
 
-      let currentChunks = await connection.get(
+      const newTotal = await connection.incrby(
         `job:${jobId}:totalCurrentChunks`,
+        chunks.length, // ← atomic: Redis does read+add+write itself
       );
-      if (!currentChunks) currentChunks = 0;
-      console.log("currentChunks", currentChunks);
-      const afterAdd = await connection.set(
-        `job:${jobId}:totalCurrentChunks`,
-        chunks.length + Number(currentChunks),
-      );
-      console.log("after add ->", afterAdd);
+      console.log("totalCurrentChunks after increment →", newTotal);
 
       for (let i = 0; i < chunks.length; i++) {
         const chunkKey = `${jobId}_${i + currentChunks}.wav`;
