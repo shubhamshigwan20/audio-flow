@@ -5,15 +5,16 @@ const transcribe = async (req, res, next) => {
   //schema cheq
   try {
     const fileObj = req.file;
-    const { mimetype } = fileObj;
-    console.log("req file -> ", fileObj);
-    console.log("mimetype ->", mimetype);
     if (!fileObj) {
       return res.status(400).json({
         status: false,
         message: "audio file not found",
       });
     }
+
+    const { mimetype } = fileObj;
+    console.log("req file -> ", fileObj);
+    console.log("mimetype ->", mimetype);
 
     if (!mimetype || !mimetype.startsWith("audio/")) {
       return res.status(400).json({
