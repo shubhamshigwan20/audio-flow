@@ -9,6 +9,7 @@ const {
   getAllChunkResults,
   mergeWithOverlapHandling,
 } = require("./utils/helper");
+const db = require("./db/db");
 
 const PORT = process.env.PORT || 80;
 
@@ -61,6 +62,10 @@ const worker = new Worker(
       console.log("sorted ->", sorted);
       const finalText = mergeWithOverlapHandling(sorted);
       console.log("final text ->", finalText);
+      await db.query(
+        `UPDATE results SET transcript = $1, status = $2 WHERE jobid = $3`,
+        [finalText, "completed", jobId],
+      );
       // await saveResult(jobId, finalText);
     } catch (err) {
       console.error(`[aggregation-worker] job ${job.data.jobId} failed:`, err);
