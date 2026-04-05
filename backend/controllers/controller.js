@@ -44,11 +44,22 @@ const transcribe = async (req, res, next) => {
     console.log("jobId ->", jobId);
     console.log("mimetype ->", detected.mime);
 
+    await db.query(`INSERT INTO results(jobId, status) VALUES($1, $2)`, [
+      jobId,
+      "received",
+    ]);
+
     res
       .status(202)
       .json({ status: true, message: "file uploaded success", jobId });
 
-    setImmediate(() => processTranscribe(jobId, fileObj));
+    setImmediate(async () => {
+      processTranscribe(jobId, fileObj);
+      await db.query(`UPDATE results SET status= $1 WHERE jobId= $2`, [
+        "download-queue",
+        jobId,
+      ]);
+    });
   } catch (err) {
     next(err);
   }
