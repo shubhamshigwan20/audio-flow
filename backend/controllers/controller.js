@@ -2,6 +2,8 @@ const { v4: uuid } = require("uuid");
 const fs = require("fs-extra");
 const db = require("../db/db");
 const { processTranscribe } = require("../utils/helper");
+const { connection } = require("../utils/queue");
+const { z } = require("zod");
 
 async function detectFileType(filePath) {
   const { fileTypeFromFile } = await import("file-type");
@@ -20,6 +22,10 @@ const ALLOWED_AUDIO_TYPES = new Set([
   "audio/webm", // .webm
   "audio/aac", // .aac
 ]);
+
+const getJobStatusSchema = z.object({
+  id: z.string(),
+});
 
 const transcribe = async (req, res, next) => {
   //schema cheq
@@ -67,4 +73,48 @@ const transcribe = async (req, res, next) => {
   }
 };
 
-module.exports = { transcribe };
+const getJobStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const parseResult = getJobStatusSchema.safeParse({ id });
+    if (!parseResult.success) {
+      return res.status(400).json({
+        status: false,
+        message: "id should be string",
+      });
+    }
+
+    const statusDbResult = await db.query(
+      `SELECT status FROM results WHERE jobId = $1`,
+      [id],
+    );
+    const status = statusDbResult.rowCount
+      ? statusDbResult.rowCount.rows[0]?.status
+      : 0;
+
+    const initialChunks = await connection.get(`job:${id}:totalInitialChunks`);
+    const converted = await connection.get(`job:${id}:chunksConverted`);
+    const transcribed = await connection.get(`job:${id}:chunksTranscribed`);
+    const total = await connection.get(`job:${id}:totalCurrentChunks`);
+
+    const payload = {
+      jobId: id,
+      status: status,
+      progress: {
+        initialChunks: initialChunks,
+        converted: converted,
+        transcribed: transcribed,
+        total: total,
+      },
+    };
+    return res.status(200).json({
+      status: true,
+      data: payload,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { transcribe, getJobStatus };
