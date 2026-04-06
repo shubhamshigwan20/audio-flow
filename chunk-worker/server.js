@@ -70,14 +70,19 @@ const worker = new Worker(
       );
       console.log("totalCurrentChunks after increment →", newTotal);
 
+      const oldTotal = await connection.get(
+        `job:${jobId}:totalCurrentChunks`,
+        chunks.length,
+      );
+
       for (let i = 0; i < chunks.length; i++) {
-        const chunkKey = `${jobId}_${i + currentChunks}.wav`;
+        const chunkKey = `${jobId}_${i + oldTotal}.wav`;
 
         const chunkUrl = await upload(chunks[i], chunkKey);
 
         const transcribePayload = {
           jobId,
-          chunkIndex: i + currentChunks,
+          chunkIndex: i + oldTotal,
           chunkUrl,
         };
 
