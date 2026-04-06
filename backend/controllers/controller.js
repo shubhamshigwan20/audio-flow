@@ -89,9 +89,7 @@ const getJobStatus = async (req, res, next) => {
       `SELECT status FROM results WHERE jobId = $1`,
       [id],
     );
-    const status = statusDbResult.rowCount
-      ? statusDbResult.rowCount.rows[0]?.status
-      : 0;
+    const status = statusDbResult.rowCount ? statusDbResult.rows[0]?.status : 0;
 
     const initialChunks = await connection.get(`job:${id}:totalInitialChunks`);
     const converted = await connection.get(`job:${id}:chunksConverted`);
