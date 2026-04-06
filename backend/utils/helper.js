@@ -5,6 +5,7 @@ const path = require("path");
 const os = require("os");
 const { downloadQueue, connection } = require("./queue");
 const { upload } = require("./supabaseClient");
+const db = require("../db/db");
 
 if (process.env.FFMPEG_PATH) {
   ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
@@ -132,6 +133,13 @@ const processTranscribe = async (jobId, fileObj) => {
   console.log("extension ->", extWithDot);
 
   for (let i = 0; i < chunks.length; i++) {
+    if (i === chunks.length - 1) {
+      await db.query(`UPDATE results SET status= $1 WHERE jobId= $2`, [
+        "queued",
+        jobId,
+      ]);
+    }
+
     const chunkKey = `${jobId}_${i}${extWithDot}`;
     console.log(`chunk ${i} size ->`, chunks[i].length / (1024 * 1024));
     const chunkUrl = await upload(chunks[i], chunkKey, fileObj.mimetype);

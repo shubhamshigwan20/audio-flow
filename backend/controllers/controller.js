@@ -61,10 +61,6 @@ const transcribe = async (req, res, next) => {
 
     setImmediate(async () => {
       processTranscribe(jobId, fileObj);
-      await db.query(`UPDATE results SET status= $1 WHERE jobId= $2`, [
-        "download-queue",
-        jobId,
-      ]);
     });
   } catch (err) {
     next(err);

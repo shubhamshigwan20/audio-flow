@@ -64,7 +64,7 @@ const worker = new Worker(
       console.log("final text ->", finalText);
       await db.query(
         `UPDATE results SET transcript = $1, status = $2 WHERE jobid = $3`,
-        [finalText, "completed", jobId],
+        [finalText, "done", jobId],
       );
       // await saveResult(jobId, finalText);
     } catch (err) {

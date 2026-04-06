@@ -13,6 +13,7 @@ const {
   getFileSizeBytes,
 } = require("./utils/helper");
 const { upload } = require("./utils/supabaseClient");
+const db = require("./db/db");
 const PORT = process.env.PORT || 80;
 
 app.use(helmet());
@@ -63,6 +64,12 @@ const worker = new Worker(
       console.log("job id ->", jobId);
       console.log("chunk index", chunkIndex);
       console.log("chunk url ->", chunkUrl);
+      if (chunkIndex === 0) {
+        await db.query(`UPDATE results SET status= $1 WHERE jobId= $2`, [
+          "processing",
+          jobId,
+        ]);
+      }
 
       const extWithDot = `.${chunkUrl.split(".").pop()}`; // ".mp3"
       console.log("extension ->", extWithDot);
