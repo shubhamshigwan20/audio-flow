@@ -70,10 +70,7 @@ const worker = new Worker(
       );
       console.log("totalCurrentChunks after increment →", newTotal);
 
-      const oldTotal = await connection.get(
-        `job:${jobId}:totalCurrentChunks`,
-        chunks.length,
-      );
+      const oldTotal = newTotal - chunks.length;
 
       for (let i = 0; i < chunks.length; i++) {
         const chunkKey = `${jobId}_${i + oldTotal}.wav`;
