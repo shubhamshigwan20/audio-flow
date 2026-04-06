@@ -97,6 +97,11 @@ const worker = new Worker(
         removeOnComplete: 5, // keep last 100
         removeOnFail: 2,
       });
+      const chunksConvrt = await connection.incrby(
+        `job:${jobId}:chunksConverted`,
+        1, // ← atomic: Redis does read+add+write itself
+      );
+      console.log(`total chunks converted ${chunksConvrt} for job Id ${jobId}`);
       console.log(`data ${result.id} added to chunk queue`);
     } catch (err) {
       console.error(`[convert-worker] job ${job.data.jobId} failed:`, err);

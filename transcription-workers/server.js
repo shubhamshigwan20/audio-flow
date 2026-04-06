@@ -81,6 +81,12 @@ const worker = new Worker(
       const total = await connection.get(`job:${jobId}:totalCurrentChunks`);
       console.log("total chunks ->", total);
 
+      const chunksTranscribed = await connection.incrby(
+        `job:${jobId}:chunksTranscribed`,
+        1, // ← atomic: Redis does read+add+write itself
+      );
+      console.log("chunks transcribed ->", chunksTranscribed);
+
       if (Number(completed) === Number(total)) {
         console.log("All chunks done → triggering aggregation");
 
