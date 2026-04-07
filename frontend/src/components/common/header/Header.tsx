@@ -4,6 +4,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu"
+import { Link } from "react-router-dom"
 
 const Header = () => {
   return (
@@ -13,16 +14,24 @@ const Header = () => {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <NavigationMenuLink>Transcribe</NavigationMenuLink>
+              <NavigationMenuLink>
+                <Link to="/">Transcribe</Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink>My Jobs</NavigationMenuLink>
+              <NavigationMenuLink>
+                <Link to="/job-status">My Jobs</Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink>Observe</NavigationMenuLink>
+              <NavigationMenuLink>
+                <Link to="/observe">Observe</Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuLink>DLQ</NavigationMenuLink>
+              <NavigationMenuLink>
+                <Link to="/dlq">DLQ</Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
