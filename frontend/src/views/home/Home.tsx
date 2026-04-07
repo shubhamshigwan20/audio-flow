@@ -4,12 +4,15 @@ import UploadArea from "./components/UploadArea"
 import SelectedFile from "./components/SelectedFile"
 import { Button } from "@/components/ui/button"
 import { allowedMimeType } from "@/constants/constants"
+import AlertBox from "./components/AlertBox"
 
 const MAX_FILE_SIZE = 500
 
 const Home = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [validFile, setValidFile] = useState(false)
+  const [jobId, setJobId] = useState("")
+  const [uploding, setUploading] = useState(false)
 
   const handleTranscribeBtnClick = async () => {
     if (!selectedFile) return
@@ -18,9 +21,14 @@ const Home = () => {
     formData.append("file", selectedFile, selectedFile.name)
 
     try {
+      setUploading(true)
       const response = await api.post("/transcribe", formData)
+      setUploading(false)
+      setJobId(response.data.jobId)
       console.log("Uploaded:", response.data)
     } catch (err) {
+      setJobId("error")
+      setUploading(false)
       console.log(err)
     }
   }
@@ -52,10 +60,11 @@ const Home = () => {
         variant="outline"
         className="w-[99%] border-1"
         onClick={handleTranscribeBtnClick}
-        disabled={!selectedFile || !validFile}
+        disabled={!selectedFile || !validFile || uploding}
       >
         Transcribe
       </Button>
+      {jobId && <AlertBox jobId={jobId} />}
     </div>
   )
 }
