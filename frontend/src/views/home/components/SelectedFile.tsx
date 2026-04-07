@@ -4,10 +4,12 @@ type SelectedFileProps = {
   selectedFileName: string
   size: number
   mimetype: string
+  validFile: boolean
 }
 
 const SelectedFile = (props: SelectedFileProps) => {
-  const { selectedFileName, size, mimetype } = props
+  const { selectedFileName, size, mimetype, validFile } = props
+
   return (
     <div className="flex w-full items-center justify-between border-1 px-5 py-2">
       <div className="flex flex-col justify-center">
@@ -18,7 +20,7 @@ const SelectedFile = (props: SelectedFileProps) => {
         </p>
       </div>
       <div className="h-full">
-        <Badge variant="default">Valid</Badge>
+        <Badge variant="default">{validFile ? "Valid" : "Invalid"}</Badge>
       </div>
     </div>
   )
