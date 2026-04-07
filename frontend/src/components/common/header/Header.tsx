@@ -20,7 +20,7 @@ const Header = () => {
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink>
-                <Link to="/job-status">My Jobs</Link>
+                <Link to="/job-history">My Jobs</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
