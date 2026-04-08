@@ -27,6 +27,10 @@ const getJobStatusSchema = z.object({
   id: z.string(),
 });
 
+const getJobHistorySchema = z.object({
+  status: z.string(),
+});
+
 const transcribe = async (req, res, next) => {
   //schema cheq
   try {
@@ -115,4 +119,41 @@ const getJobStatus = async (req, res, next) => {
   }
 };
 
-module.exports = { transcribe, getJobStatus };
+const getJobHistory = async (req, res, next) => {
+  try {
+    const parseResult = getJobHistorySchema.safeParse(req.body);
+
+    if (!parseResult.success) {
+      return res.status(400).json({
+        status: false,
+        message: "invalid status",
+      });
+    }
+    const status = req.body.status;
+    let dbResult = "";
+    if (status === "all-status") {
+      dbResult = await db.query(`SELECT * FROM results`);
+    } else {
+      dbResult = await db.query(`SELECT * FROM results WHERE status = $1`, [
+        status,
+      ]);
+    }
+
+    if (!dbResult.rowCount) {
+      return res.status(200).json({
+        status: false,
+        data: [],
+      });
+    }
+
+    const payload = dbResult.rows;
+    return res.status(200).json({
+      status: true,
+      data: payload,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { transcribe, getJobStatus, getJobHistory };

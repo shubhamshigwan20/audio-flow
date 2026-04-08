@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -5,20 +6,39 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { jobStatuses } from "@/constants/constants"
 
-const StatusDropdown = () => {
+type StatusDropdownPropType = {
+  fetchJobHistory: (status: string) => void
+}
+
+const StatusDropdown = (props: StatusDropdownPropType) => {
+  const { fetchJobHistory } = props
+  const [filterStatus, setFilterStatus] = useState("all-status")
+  const handleStatusChange = (key: string) => {
+    setFilterStatus(key)
+  }
+  const getStatusValue = (key: string) =>
+    jobStatuses.find((status) => status.key === key)?.value ?? "Unknown"
+
+  useEffect(() => {
+    fetchJobHistory(filterStatus)
+  }, [filterStatus, fetchJobHistory])
+
   return (
     <div className="w-full">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
-            All Statuses
+            {getStatusValue(filterStatus)}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem>Done</DropdownMenuItem>
-          <DropdownMenuItem>In progress</DropdownMenuItem>
-          <DropdownMenuItem>Failed</DropdownMenuItem>
+          {jobStatuses.map((status) => (
+            <DropdownMenuItem onClick={() => handleStatusChange(status.key)}>
+              {status.value}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
