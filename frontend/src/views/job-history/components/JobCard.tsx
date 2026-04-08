@@ -1,4 +1,3 @@
-import React from "react"
 import {
   Card,
   CardAction,
@@ -10,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
+import { useNavigate } from "react-router-dom"
 
 type CardType = {
   fileName: string
@@ -25,6 +25,10 @@ type JobCardPropsType = {
 
 const JobCard = (props: JobCardPropsType) => {
   const { card } = props
+  const navigate = useNavigate()
+  const handleTrackStatusClick = () => {
+    navigate(`/job-status/${card.jobId}`)
+  }
   return (
     <Card>
       <CardHeader>
@@ -45,8 +49,10 @@ const JobCard = (props: JobCardPropsType) => {
       <Separator />
       <CardContent>
         <div className="flex gap-2">
-          <Button variant="outline">View transcript</Button>
-          <Button variant="outline">Download .txt</Button>
+          <Button variant="outline" onClick={handleTrackStatusClick}>
+            Track Status
+          </Button>
+          {/* <Button variant="outline">Download .txt</Button> */}
         </div>
       </CardContent>
     </Card>
