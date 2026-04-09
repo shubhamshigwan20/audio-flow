@@ -25,6 +25,7 @@ type InsightsCardPropType = {
 const InsightsCard = (props: InsightsCardPropType) => {
   const { fileName, jobId, headers } = props
   const status = useJobStatus((state) => state.status)
+  const progress = useJobStatus((state) => state.progress)
   return (
     <div>
       <Card>
@@ -42,7 +43,7 @@ const InsightsCard = (props: InsightsCardPropType) => {
             </div>
             <div>
               <p>Chunks Done</p>
-              <p>{`${headers.chunksDone}/${headers.totalChunks}`}</p>
+              <p>{`${progress.transcribed}/${progress.total}`}</p>
             </div>
             <div>
               <p>Elapsed</p>
