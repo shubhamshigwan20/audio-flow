@@ -93,6 +93,9 @@ const getJobStatus = async (req, res, next) => {
       `SELECT * FROM results WHERE jobid = $1`,
       [id],
     );
+
+    let createdAt = "";
+    let completedAt = "";
     let status = "";
     let initialChunks = 0;
     let converted = 0;
@@ -104,6 +107,8 @@ const getJobStatus = async (req, res, next) => {
       converted = statusDbResult.rows[0]?.converted;
       transcribed = statusDbResult.rows[0]?.transcribed;
       total = statusDbResult.rows[0]?.total;
+      createdAt = statusDbResult.rows[0]?.created_at;
+      completedAt = statusDbResult.rows[0]?.completed_at;
     }
 
     const payload = {
@@ -115,6 +120,8 @@ const getJobStatus = async (req, res, next) => {
         transcribed: transcribed,
         total: total,
       },
+      created_at: createdAt,
+      completed_at: completedAt,
     };
     return res.status(200).json({
       status: true,

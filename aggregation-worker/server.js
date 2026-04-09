@@ -63,8 +63,8 @@ const worker = new Worker(
       const finalText = mergeWithOverlapHandling(sorted);
       console.log("final text ->", finalText);
       await db.query(
-        `UPDATE results SET transcript = $1, status = $2 WHERE jobid = $3`,
-        [finalText, "done", jobId],
+        `UPDATE results SET transcript = $1, status = 'done', completed_at = CURRENT_TIMESTAMP WHERE jobid = $2`,
+        [finalText, jobId],
       );
       // await saveResult(jobId, finalText);
     } catch (err) {
