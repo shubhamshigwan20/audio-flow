@@ -90,13 +90,10 @@ const getJobStatus = async (req, res, next) => {
     }
 
     const statusDbResult = await db.query(
-      `SELECT * FROM results WHERE jobId = $1`,
+      `SELECT status FROM results WHERE jobId = $1`,
       [id],
     );
     const status = statusDbResult.rowCount ? statusDbResult.rows[0]?.status : 0;
-    const transcript = statusDbResult.rowCount
-      ? statusDbResult.rows[0]?.transcript
-      : "";
 
     const initialChunks = await connection.get(`job:${id}:totalInitialChunks`);
     const converted = await connection.get(`job:${id}:chunksConverted`);
@@ -112,11 +109,40 @@ const getJobStatus = async (req, res, next) => {
         transcribed: transcribed,
         total: total,
       },
-      transcript: transcript,
     };
     return res.status(200).json({
       status: true,
       data: payload,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getTranscript = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const parseResult = getJobStatusSchema.safeParse({ id });
+    if (!parseResult.success) {
+      return res.status(400).json({
+        status: false,
+        message: "id should be string",
+      });
+    }
+
+    const statusDbResult = await db.query(
+      `SELECT transcript FROM results WHERE jobId = $1`,
+      [id],
+    );
+
+    const transcript = statusDbResult.rowCount
+      ? statusDbResult.rows[0]?.transcript
+      : "";
+
+    return res.status(200).json({
+      status: true,
+      data: transcript,
     });
   } catch (err) {
     next(err);
@@ -160,4 +186,4 @@ const getJobHistory = async (req, res, next) => {
   }
 };
 
-module.exports = { transcribe, getJobStatus, getJobHistory };
+module.exports = { transcribe, getJobStatus, getJobHistory, getTranscript };

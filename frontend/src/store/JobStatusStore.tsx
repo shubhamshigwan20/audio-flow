@@ -20,6 +20,7 @@ interface JobStatusState {
   progress: JobProgressType
   transcript: string
   setJobData: (data: FileStatusType) => void
+  setTranscriptData: (data: string) => void
 }
 
 const useJobStatus = create<JobStatusState>((set) => ({
@@ -37,8 +38,8 @@ const useJobStatus = create<JobStatusState>((set) => ({
       jobId: data.jobId,
       status: data.status,
       progress: data.progress,
-      transcript: data.transcript,
     })),
+  setTranscriptData: (data: string) => set(() => ({ transcript: data })),
 }))
 
 export default useJobStatus
