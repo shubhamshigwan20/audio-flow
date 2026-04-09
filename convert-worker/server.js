@@ -65,7 +65,7 @@ const worker = new Worker(
       console.log("chunk index", chunkIndex);
       console.log("chunk url ->", chunkUrl);
       if (chunkIndex === 0) {
-        await db.query(`UPDATE results SET status= $1 WHERE jobId= $2`, [
+        await db.query(`UPDATE results SET status= $1 WHERE jobid= $2`, [
           "processing",
           jobId,
         ]);
@@ -97,10 +97,16 @@ const worker = new Worker(
         removeOnComplete: 5, // keep last 100
         removeOnFail: 2,
       });
+
       const chunksConvrt = await connection.incrby(
         `job:${jobId}:chunksConverted`,
         1, // ← atomic: Redis does read+add+write itself
       );
+
+      await db.query(`UPDATE results SET converted = $1 WHERE jobid = $2`, [
+        chunksConvrt,
+        jobId,
+      ]);
       console.log(`total chunks converted ${chunksConvrt} for job Id ${jobId}`);
       console.log(`data ${result.id} added to chunk queue`);
     } catch (err) {

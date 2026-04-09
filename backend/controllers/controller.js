@@ -90,7 +90,7 @@ const getJobStatus = async (req, res, next) => {
     }
 
     const statusDbResult = await db.query(
-      `SELECT status FROM results WHERE jobId = $1`,
+      `SELECT status FROM results WHERE jobid = $1`,
       [id],
     );
     const status = statusDbResult.rowCount ? statusDbResult.rows[0]?.status : 0;
@@ -132,7 +132,7 @@ const getTranscript = async (req, res, next) => {
     }
 
     const statusDbResult = await db.query(
-      `SELECT transcript FROM results WHERE jobId = $1`,
+      `SELECT transcript FROM results WHERE jobid = $1`,
       [id],
     );
 

@@ -116,7 +116,7 @@ async function splitAudio(fileObj, jobId, chunkDuration = 120) {
   // Cleanup input file
   await fs.remove(inputPath);
 
-  return chunks;
+  return { chunks, duration };
 }
 
 const processTranscribe = async (jobId, fileObj) => {
@@ -126,15 +126,22 @@ const processTranscribe = async (jobId, fileObj) => {
     ? chunkDurationEnv
     : await calculateDuration(fileObj);
   console.log("chunk duration ->", chunkDuration);
-  const chunks = await splitAudio(fileObj, jobId, chunkDuration);
+  const { chunks, duration } = await splitAudio(fileObj, jobId, chunkDuration);
   console.log("chunks ->", chunks);
-  await connection.set(`job:${jobId}:totalInitialChunks`, chunks.length);
+
+  const totalInitialChunks = chunks.length;
+  await db.query(
+    `UPDATE results SET initial = $1, duration = $2 WHERE jobid = $3`,
+    [totalInitialChunks, duration, jobId],
+  );
+
+  await connection.set(`job:${jobId}:totalInitialChunks`, totalInitialChunks);
   const extWithDot = `.${fileObj.originalname.split(".").pop()}`; // ".mp3"
   console.log("extension ->", extWithDot);
 
   for (let i = 0; i < chunks.length; i++) {
     if (i === chunks.length - 1) {
-      await db.query(`UPDATE results SET status= $1 WHERE jobId= $2`, [
+      await db.query(`UPDATE results SET status= $1 WHERE jobid= $2`, [
         "queued",
         jobId,
       ]);

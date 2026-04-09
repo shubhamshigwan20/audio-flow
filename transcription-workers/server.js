@@ -11,6 +11,7 @@ const {
 } = require("./utils/queue");
 const { getPresignedURL } = require("./utils/supabaseClient");
 const groqTranscribe = require("./utils/groqStt");
+const db = require("./db/db");
 
 const PORT = process.env.PORT || 80;
 
@@ -85,6 +86,11 @@ const worker = new Worker(
         `job:${jobId}:chunksTranscribed`,
         1, // ← atomic: Redis does read+add+write itself
       );
+
+      await db.query(`UPDATE results SET transcribed = $1 WHERE jobid = $2`, [
+        chunksTranscribed,
+        jobId,
+      ]);
       console.log("chunks transcribed ->", chunksTranscribed);
 
       if (Number(completed) === Number(total)) {

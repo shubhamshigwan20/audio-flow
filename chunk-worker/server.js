@@ -8,6 +8,7 @@ const { Worker } = require("bullmq");
 const { connection, transcriptionQueue, chunkQueue } = require("./utils/queue");
 const { upload, getPresignedURL } = require("./utils/supabaseClient");
 const { downloadFile, splitAudio } = require("./utils/helper");
+const db = require("./db/db");
 
 const PORT = process.env.PORT || 80;
 
@@ -68,6 +69,11 @@ const worker = new Worker(
         `job:${jobId}:totalCurrentChunks`,
         chunks.length, // ← atomic: Redis does read+add+write itself
       );
+
+      await db.query(`UPDATE results SET total = $1 WHERE jobid = $2`, [
+        newTotal,
+        jobId,
+      ]);
       console.log("totalCurrentChunks after increment →", newTotal);
 
       const oldTotal = newTotal - chunks.length;
