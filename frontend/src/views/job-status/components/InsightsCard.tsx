@@ -1,4 +1,3 @@
-import React from "react"
 import {
   Card,
   CardContent,
@@ -7,6 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import useJobStatus from "@/store/JobStatusStore"
 
 type HeadersType = {
   status: string
@@ -24,6 +24,7 @@ type InsightsCardPropType = {
 
 const InsightsCard = (props: InsightsCardPropType) => {
   const { fileName, jobId, headers } = props
+  const status = useJobStatus((state) => state.status)
   return (
     <div>
       <Card>
@@ -36,7 +37,7 @@ const InsightsCard = (props: InsightsCardPropType) => {
             <div>
               <p>Stage</p>
               <p>
-                <Badge variant="default">{headers.status}</Badge>
+                <Badge variant="default">{status}</Badge>
               </p>
             </div>
             <div>

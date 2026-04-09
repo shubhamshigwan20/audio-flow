@@ -1,3 +1,5 @@
 const JOB_HISTORY = `/jobs` //POST
 
-export { JOB_HISTORY }
+const JOB_STATUS = (id: string) => `/jobs/${id}` //GET
+
+export { JOB_HISTORY, JOB_STATUS }

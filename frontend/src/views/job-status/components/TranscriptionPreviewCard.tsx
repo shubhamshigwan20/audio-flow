@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import useJobStatus from "@/store/JobStatusStore"
 
 const TranscriptionPreviewCard = () => {
+  const transcript = useJobStatus((state) => state.transcript)
   return (
     <div>
       <Card>
@@ -10,7 +12,7 @@ const TranscriptionPreviewCard = () => {
           {/* <CardAction>Card Action</CardAction> */}
         </CardHeader>
         <CardContent>
-          <p>Available when complete</p>
+          <p>{transcript}</p>
         </CardContent>
       </Card>
     </div>

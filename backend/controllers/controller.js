@@ -90,10 +90,13 @@ const getJobStatus = async (req, res, next) => {
     }
 
     const statusDbResult = await db.query(
-      `SELECT status FROM results WHERE jobId = $1`,
+      `SELECT * FROM results WHERE jobId = $1`,
       [id],
     );
     const status = statusDbResult.rowCount ? statusDbResult.rows[0]?.status : 0;
+    const transcript = statusDbResult.rowCount
+      ? statusDbResult.rows[0]?.transcript
+      : "";
 
     const initialChunks = await connection.get(`job:${id}:totalInitialChunks`);
     const converted = await connection.get(`job:${id}:chunksConverted`);
@@ -109,6 +112,7 @@ const getJobStatus = async (req, res, next) => {
         transcribed: transcribed,
         total: total,
       },
+      transcript: transcript,
     };
     return res.status(200).json({
       status: true,
