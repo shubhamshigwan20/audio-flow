@@ -6,13 +6,13 @@ import TranscriptionPreviewCard from "./components/TranscriptionPreviewCard"
 import { GET_TRANSCRIPT, JOB_STATUS } from "@/constants/endpoints"
 import api from "@/api/api"
 import useJobStatus from "@/store/JobStatusStore"
-import useLoaderState from "@/store/LoaderStateStore"
+// import useLoaderState from "@/store/LoaderStateStore"
 
 const JobStatus = () => {
   const { jobId = "" } = useParams<{ jobId: string }>()
   const setJobData = useJobStatus((state) => state.setJobData)
   const setTranscriptData = useJobStatus((state) => state.setTranscriptData)
-  const setIsOpen = useLoaderState((state) => state.setIsOpen)
+  // const setIsOpen = useLoaderState((state) => state.setIsOpen)
   const checkStatus = useRef(true)
 
   useEffect(() => {
@@ -23,23 +23,23 @@ const JobStatus = () => {
 
     const fetchData = async () => {
       try {
-        setIsOpen(true)
+        // setIsOpen(true)
         const result = await api.get(JOB_STATUS(jobId))
-        setIsOpen(false)
+        // setIsOpen(false)
         setJobData(result.data.data)
         if (result.data.data?.status === "done") {
           checkStatus.current = false
           clearInterval(intervalId)
         }
         if (result.data.data?.status === "done") {
-          setIsOpen(true)
+          // setIsOpen(true)
           const transcriptApiResult = await api.get(GET_TRANSCRIPT(jobId))
           setTranscriptData(transcriptApiResult.data.data)
-          setIsOpen(false)
+          // setIsOpen(false)
         }
       } catch (err) {
         console.log(err)
-        setIsOpen(false)
+        // setIsOpen(false)
       }
     }
     fetchData()
