@@ -6,6 +6,7 @@ const os = require("os");
 const { downloadQueue, connection } = require("./queue");
 const { upload } = require("./supabaseClient");
 const db = require("../db/db");
+const { getDriveClientWithRefreshToken } = require("../utils/googleAuth");
 
 if (process.env.FFMPEG_PATH) {
   ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
@@ -172,4 +173,46 @@ const processTranscribe = async (jobId, fileObj) => {
   }
 };
 
-module.exports = { calculateDuration, processTranscribe };
+const downloadGoogleDriveMp3 = async (refreshToken, fileId, mp3File) => {
+  const drive = await getDriveClientWithRefreshToken(refreshToken);
+
+  const fileMeta = await drive.files.get({
+    fileId,
+    fields: "name, mimeType",
+  });
+
+  const allowedMimeTypes = [
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/ogg",
+    "audio/mp4",
+  ];
+
+  if (!allowedMimeTypes.includes(fileMeta.data.mimeType)) {
+    throw new Error(`Invalid file type: ${fileMeta.data.mimeType}`);
+  }
+
+  const response = await drive.files.get(
+    { fileId, alt: "media" },
+    { responseType: "stream" },
+  );
+
+  const writer = fs.createWriteStream(mp3File);
+  response.data.pipe(writer);
+
+  console.log(
+    `file saved to disk output path ${mp3File} fileId ${fileId} originalName ${fileMeta.data.name}`,
+  );
+  return new Promise((resolve, reject) => {
+    writer.on("finish", resolve);
+    writer.on("error", reject);
+  });
+};
+
+module.exports = {
+  calculateDuration,
+  processTranscribe,
+  downloadGoogleDriveMp3,
+};

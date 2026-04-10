@@ -1,9 +1,14 @@
 const { v4: uuid } = require("uuid");
 const fs = require("fs-extra");
+const path = require("path");
 const db = require("../db/db");
-const { processTranscribe } = require("../utils/helper");
+const {
+  processTranscribe,
+  downloadGoogleDriveMp3,
+} = require("../utils/helper");
 const { connection } = require("../utils/queue");
 const { z } = require("zod");
+const { exchangeCodeForTokens } = require("../utils/googleAuth");
 
 async function detectFileType(filePath) {
   const { fileTypeFromFile } = await import("file-type");
@@ -29,6 +34,10 @@ const getJobStatusSchema = z.object({
 
 const getJobHistorySchema = z.object({
   status: z.string(),
+});
+
+const googleTokenSchema = z.object({
+  code: z.string(),
 });
 
 const transcribe = async (req, res, next) => {
@@ -61,6 +70,53 @@ const transcribe = async (req, res, next) => {
     console.log("mimetype ->", detected.mime);
     const fileName = fileObj.originalname.slice(0, 255);
     const fileSize = fileObj.size;
+
+    const dbResult = await db.query(
+      `INSERT INTO results(jobId, status, filename, size) VALUES($1, 'received', $2, $3) RETURNING created_at`,
+      [jobId, fileName, fileSize],
+    );
+
+    let createdAt = "";
+    if (dbResult.rowCount) {
+      createdAt = dbResult.rows[0]?.created_at;
+    }
+
+    res.status(202).json({
+      status: true,
+      message: "file uploaded success",
+      file_name: fileName,
+      size: fileSize,
+      jobId,
+      created_at: createdAt,
+    });
+
+    setImmediate(async () => {
+      processTranscribe(jobId, fileObj);
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+const transcribeGDrive = async (req, res, next) => {
+  //schema cheq
+  try {
+    const { filename, fileid, refreshToken, mimeType } = req.body;
+    console.log("fileid ->", fileid);
+    console.log("refresh token ->", refreshToken);
+
+    //create a unique job id
+    const jobId = uuid();
+    console.log("jobId ->", jobId);
+    const fileName = filename;
+    await downloadGoogleDriveMp3(refreshToken, fileid, filename);
+    const fileSize = fs.statSync(fileName).size;
+
+    const fileObj = {
+      originalname: path.basename(filename),
+      mimetype: mimeType,
+      path: fileName,
+    };
+    console.log("fileObj GDRive ->", fileObj);
 
     const dbResult = await db.query(
       `INSERT INTO results(jobId, status, filename, size) VALUES($1, 'received', $2, $3) RETURNING created_at`,
@@ -214,4 +270,41 @@ const getJobHistory = async (req, res, next) => {
   }
 };
 
-module.exports = { transcribe, getJobStatus, getJobHistory, getTranscript };
+const getGoogleToken = async (req, res, next) => {
+  const { code } = req.body || {};
+
+  const parseResult = googleTokenSchema.safeParse({ code });
+  if (!parseResult.success) {
+    return res.status(400).json({
+      status: false,
+      message: "missing authorization code",
+    });
+  }
+
+  try {
+    console.log("google token code ->", code);
+    const tokens = await exchangeCodeForTokens(code);
+    console.log("google token tokens ->", tokens);
+    console.log("google token access token ->", tokens.access_token);
+
+    //to store token in store
+    // saveRefreshToken(resolvedUserId, tokens.refresh_token);
+
+    return res.status(200).json({
+      status: true,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  transcribe,
+  getJobStatus,
+  getJobHistory,
+  getTranscript,
+  getGoogleToken,
+  transcribeGDrive,
+};
