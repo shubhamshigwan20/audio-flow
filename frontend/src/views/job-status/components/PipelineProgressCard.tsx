@@ -130,7 +130,7 @@ const PipelineProgressCard = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
-          {steps.map((step, i) => (
+          {steps.map((step) => (
             <div
               key={step.label}
               className={`flex items-center justify-between rounded-lg px-3 py-2.5 ${step.status === "in-progress" ? "bg-blue-50/60 dark:bg-blue-950/20" : "hover:bg-muted/40"}`}
