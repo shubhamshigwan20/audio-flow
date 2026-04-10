@@ -5,11 +5,13 @@ import Loader from "@/components/common/loader/Loader"
 
 const ProtectedRoutes = () => {
   return (
-    <div className="flex min-h-screen flex-col border-1">
+    <div className="flex min-h-screen flex-col">
       <Header />
       <Loader />
-      <main className="flex-1 px-5">
-        <Outlet />
+      <main className="flex-1 py-8">
+        <div className="mx-auto max-w-5xl px-6">
+          <Outlet />
+        </div>
       </main>
       <Footer />
     </div>
