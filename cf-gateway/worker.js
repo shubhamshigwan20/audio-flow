@@ -25,7 +25,10 @@ export default {
     const workers = getWorkers(env);
     const url = new URL(request.url);
 
-    if (request.method === "POST" && url.pathname === "/transcribe") {
+    if (
+      request.method === "POST" &&
+      (url.pathname === "/transcribe" || url.pathname === "/auth/google-token")
+    ) {
       return handleTranscribe(request, env, ctx, workers);
     }
 
