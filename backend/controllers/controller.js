@@ -59,15 +59,27 @@ const transcribe = async (req, res, next) => {
     const jobId = uuid();
     console.log("jobId ->", jobId);
     console.log("mimetype ->", detected.mime);
+    const fileName = fileObj.originalname.slice(0, 255);
+    const fileSize = fileObj.size;
 
-    await db.query(`INSERT INTO results(jobId, status) VALUES($1, $2)`, [
+    const dbResult = await db.query(
+      `INSERT INTO results(jobId, status, filename, size) VALUES($1, 'received', $2, $3) RETURNING created_at`,
+      [jobId, fileName, fileSize],
+    );
+
+    let createdAt = "";
+    if (dbResult.rowCount) {
+      createdAt = dbResult.rows[0]?.created_at;
+    }
+
+    res.status(202).json({
+      status: true,
+      message: "file uploaded success",
+      file_name: fileName,
+      size: fileSize,
       jobId,
-      "received",
-    ]);
-
-    res
-      .status(202)
-      .json({ status: true, message: "file uploaded success", jobId });
+      created_at: createdAt,
+    });
 
     setImmediate(async () => {
       processTranscribe(jobId, fileObj);

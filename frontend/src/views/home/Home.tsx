@@ -25,7 +25,6 @@ const Home = () => {
       const response = await api.post("/transcribe", formData)
       setUploading(false)
       setJobId(response.data.jobId)
-      console.log("Uploaded:", response.data)
     } catch (err) {
       setJobId("error")
       setUploading(false)
