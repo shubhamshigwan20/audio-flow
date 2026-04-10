@@ -106,6 +106,7 @@ const getJobStatus = async (req, res, next) => {
       [id],
     );
 
+    let fileName = "";
     let createdAt = "";
     let completedAt = "";
     let status = "";
@@ -114,6 +115,7 @@ const getJobStatus = async (req, res, next) => {
     let transcribed = 0;
     let total = 0;
     if (statusDbResult.rowCount) {
+      fileName = statusDbResult.rows[0]?.filename;
       status = statusDbResult.rows[0]?.status;
       initialChunks = statusDbResult.rows[0]?.initial;
       converted = statusDbResult.rows[0]?.converted;
@@ -124,6 +126,7 @@ const getJobStatus = async (req, res, next) => {
     }
 
     const payload = {
+      filename: fileName,
       jobId: id,
       status: status,
       progress: {

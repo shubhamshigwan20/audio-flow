@@ -11,6 +11,7 @@ type APICardType = {
   filename: string
   size: number
   duration: number
+  created_at: string
 }
 
 type CardType = {
@@ -19,6 +20,7 @@ type CardType = {
   status: string
   size: number
   duration: number
+  createdAt: string
 }
 
 const JobHistory = () => {
@@ -37,6 +39,7 @@ const JobHistory = () => {
             status: card.status,
             size: Number(card.size),
             duration: Number(card.duration),
+            createdAt: card.created_at,
           }
         })
         setJobCards(jobs)

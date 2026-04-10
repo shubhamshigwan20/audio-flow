@@ -9,22 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import useJobStatus from "@/store/JobStatusStore"
 import { formatSeconds } from "@/utils/helper"
 
-type HeadersType = {
-  status: string
-  totalChunks: number
-  chunksDone: number
-  elapsedTime: number
-  remainingTime: number
-}
-
-type InsightsCardPropType = {
-  fileName: string
-  jobId: string
-  headers: HeadersType
-}
-
-const InsightsCard = (props: InsightsCardPropType) => {
-  const { fileName, jobId, headers } = props
+const InsightsCard = () => {
+  const fileName = useJobStatus((state) => state.filename)
+  const jobIdStore = useJobStatus((state) => state.jobId)
   const status = useJobStatus((state) => state.status)
   const progress = useJobStatus((state) => state.progress)
   const createdAt = useJobStatus((state) => state.createdAt)
@@ -49,7 +36,7 @@ const InsightsCard = (props: InsightsCardPropType) => {
       <Card>
         <CardHeader>
           <CardTitle>{fileName}</CardTitle>
-          <CardDescription>{jobId}</CardDescription>
+          <CardDescription>{jobIdStore}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between">
@@ -69,7 +56,7 @@ const InsightsCard = (props: InsightsCardPropType) => {
             </div>
             <div>
               <p>Est. remaining</p>
-              <p>~{headers.remainingTime}s</p>
+              <p>~{0}s</p>
             </div>
           </div>
         </CardContent>

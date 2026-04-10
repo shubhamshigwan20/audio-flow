@@ -10,4 +10,15 @@ function formatSeconds(totalSeconds: number) {
   return `${pad(hours)} H: ${pad(minutes)} M: ${pad(seconds)} S`;
 }
 
-export { formatSeconds }
+function formatDate(isoString: string) {
+  const date = new Date(isoString);
+
+  const day = date.getUTCDate();
+  const month = date.getUTCMonth() + 1; // months are 0-based
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+
+  return `${day}/${month} - ${hours}:${minutes.toString().padStart(2, '0')}`;
+}
+
+export { formatSeconds, formatDate }

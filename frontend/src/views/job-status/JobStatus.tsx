@@ -8,17 +8,9 @@ import api from "@/api/api"
 import useJobStatus from "@/store/JobStatusStore"
 
 const JobStatus = () => {
-  const headers = {
-    status: "Transcribing",
-    totalChunks: 20,
-    chunksDone: 14,
-    elapsedTime: 145,
-    remainingTime: 45,
-  }
   const { jobId = "" } = useParams<{ jobId: string }>()
   const setJobData = useJobStatus((state) => state.setJobData)
   const setTranscriptData = useJobStatus((state) => state.setTranscriptData)
-  const jobIdStore = useJobStatus((state) => state.jobId)
   const checkStatus = useRef(true)
 
   useEffect(() => {
@@ -52,7 +44,7 @@ const JobStatus = () => {
   }, [jobId])
   return (
     <div className="flex flex-col gap-7 py-5">
-      <InsightsCard fileName={""} jobId={jobIdStore} headers={headers} />
+      <InsightsCard />
       <PipelineProgressCard />
       <TranscriptionPreviewCard />
     </div>

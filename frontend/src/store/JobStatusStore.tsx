@@ -8,6 +8,7 @@ type JobProgressType = {
 }
 
 type FileStatusType = {
+  filename: string
   jobId: string
   progress: JobProgressType
   status: string
@@ -17,6 +18,7 @@ type FileStatusType = {
 }
 
 interface JobStatusState {
+  filename: string
   jobId: string
   status: string
   progress: JobProgressType
@@ -28,6 +30,7 @@ interface JobStatusState {
 }
 
 const useJobStatus = create<JobStatusState>((set) => ({
+  filename: "",
   jobId: "",
   status: "",
   progress: {
@@ -41,6 +44,7 @@ const useJobStatus = create<JobStatusState>((set) => ({
   transcript: "",
   setJobData: (data: FileStatusType) =>
     set(() => ({
+      filename: data.filename,
       jobId: data.jobId,
       status: data.status,
       progress: data.progress,

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
-import { formatSeconds } from "../../../utils/helper"
+import { formatDate, formatSeconds } from "../../../utils/helper"
 
 type CardType = {
   fileName: string
@@ -18,6 +18,7 @@ type CardType = {
   status: string
   size: number
   duration: number
+  createdAt: string
 }
 
 type JobCardPropsType = {
@@ -36,6 +37,7 @@ const JobCard = (props: JobCardPropsType) => {
         <CardTitle>{card.fileName}</CardTitle>
         <Separator />
         <CardDescription>
+          <div className="flex justify-end">{formatDate(card.createdAt)}</div>
           <div className="flex justify-between">
             <span>{card.jobId}</span>
             <span>
