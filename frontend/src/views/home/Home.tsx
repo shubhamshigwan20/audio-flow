@@ -5,6 +5,8 @@ import SelectedFile from "./components/SelectedFile"
 import { Button } from "@/components/ui/button"
 import { allowedMimeType } from "@/constants/constants"
 import AlertBox from "./components/AlertBox"
+import useLoaderState from "@/store/LoaderStateStore"
+import { TRANSCRIBE } from "@/constants/endpoints"
 
 const MAX_FILE_SIZE = 500
 
@@ -13,6 +15,7 @@ const Home = () => {
   const [validFile, setValidFile] = useState(false)
   const [jobId, setJobId] = useState("")
   const [uploding, setUploading] = useState(false)
+  const setIsOpen = useLoaderState((state) => state.setIsOpen)
 
   const handleTranscribeBtnClick = async () => {
     if (!selectedFile) return
@@ -22,12 +25,15 @@ const Home = () => {
 
     try {
       setUploading(true)
-      const response = await api.post("/transcribe", formData)
+      setIsOpen(true)
+      const response = await api.post(TRANSCRIBE, formData)
       setUploading(false)
+      setIsOpen(false)
       setJobId(response.data.jobId)
     } catch (err) {
       setJobId("error")
       setUploading(false)
+      setIsOpen(false)
       console.log(err)
     }
   }

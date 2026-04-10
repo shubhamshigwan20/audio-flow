@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react"
+import { useState } from "react"
 import StatusDropdown from "./components/StatusDropdown"
 import JobCard from "./components/JobCard"
 import { JOB_HISTORY } from "@/constants/endpoints"
 import api from "@/api/api"
+import useLoaderState from "@/store/LoaderStateStore"
 
 type APICardType = {
   jobid: string
@@ -25,29 +26,29 @@ type CardType = {
 
 const JobHistory = () => {
   const [jobCards, setJobCards] = useState<CardType[]>([])
+  const setIsOpen = useLoaderState((state) => state.setIsOpen)
 
-  const fetchJobHistory = useCallback(async (status: string) => {
+  const fetchJobHistory = async (status: string) => {
     try {
-      const payload = { status: status }
-      const results = await api.post(JOB_HISTORY, payload)
+      setIsOpen(true)
+      const results = await api.post(JOB_HISTORY, { status })
+      setIsOpen(false)
       if (results.status === 200) {
-        const jobCards = results.data.data
-        const jobs = jobCards.map((card: APICardType) => {
-          return {
-            fileName: card.filename,
-            jobId: card.jobid,
-            status: card.status,
-            size: Number(card.size),
-            duration: Number(card.duration),
-            createdAt: card.created_at,
-          }
-        })
+        const jobs = results.data.data.map((card: APICardType) => ({
+          fileName: card.filename,
+          jobId: card.jobid,
+          status: card.status,
+          size: Number(card.size),
+          duration: Number(card.duration),
+          createdAt: card.created_at,
+        }))
         setJobCards(jobs)
       }
     } catch (err) {
+      setIsOpen(false)
       console.log(err)
     }
-  }, [])
+  }
 
   return (
     <div className="flex flex-col gap-3 py-2">

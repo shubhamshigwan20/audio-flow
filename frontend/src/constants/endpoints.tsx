@@ -4,4 +4,6 @@ const JOB_STATUS = (id: string) => `/jobs/${id}` //GET
 
 const GET_TRANSCRIPT = (id: string) => `/jobs/${id}/transcript` //GET
 
-export { JOB_HISTORY, JOB_STATUS, GET_TRANSCRIPT }
+const TRANSCRIBE = `/transcribe` //POST
+
+export { JOB_HISTORY, JOB_STATUS, GET_TRANSCRIPT, TRANSCRIBE }

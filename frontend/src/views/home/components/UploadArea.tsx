@@ -20,7 +20,7 @@ const UploadArea = (props: UploadAreaProps) => {
   return (
     <div className="mt-8 flex h-[30vh] w-full flex-col items-center justify-center border-1 border-dashed">
       <p className="text-lg">Drop audio file here</p>
-      <p className="text-md mb-4">MP3, WAV, M4A, OGG, FLAC max 200 MB</p>
+      <p className="text-md mb-4">MP3, WAV, M4A, OGG, FLAC max 500 MB</p>
       <input
         ref={fileInputRef}
         type="file"
