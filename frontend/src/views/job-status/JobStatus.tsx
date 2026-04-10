@@ -35,10 +35,7 @@ const JobStatus = () => {
           checkStatus.current = false
           clearInterval(intervalId)
         }
-        if (
-          result.data.data?.progress?.total ===
-          result.data.data?.progress?.transcribed
-        ) {
+        if (result.data.data?.status === "done") {
           const transcriptApiResult = await api.get(GET_TRANSCRIPT(jobId))
           setTranscriptData(transcriptApiResult.data.data)
         }
@@ -47,7 +44,7 @@ const JobStatus = () => {
       }
     }
     fetchData()
-    intervalId = setInterval(fetchData, 2000)
+    intervalId = setInterval(fetchData, 4000)
 
     return () => {
       clearInterval(intervalId)

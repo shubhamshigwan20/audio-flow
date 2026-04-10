@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
+import { formatSeconds } from "../../../utils/helper"
 
 type CardType = {
   fileName: string
@@ -38,7 +39,8 @@ const JobCard = (props: JobCardPropsType) => {
           <div className="flex justify-between">
             <span>{card.jobId}</span>
             <span>
-              {card.size} | {card.duration}
+              {`${(card.size / (1024 * 1024)).toFixed(2)} MB`} |{" "}
+              {`${formatSeconds(card.duration)}`}
             </span>
           </div>
         </CardDescription>
@@ -52,7 +54,6 @@ const JobCard = (props: JobCardPropsType) => {
           <Button variant="outline" onClick={handleTrackStatusClick}>
             Track Status
           </Button>
-          {/* <Button variant="outline">Download .txt</Button> */}
         </div>
       </CardContent>
     </Card>

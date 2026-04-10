@@ -8,6 +8,9 @@ type APICardType = {
   jobid: string
   status: string
   transcript: string
+  filename: string
+  size: number
+  duration: number
 }
 
 type CardType = {
@@ -28,17 +31,14 @@ const JobHistory = () => {
       if (results.status === 200) {
         const jobCards = results.data.data
         const jobs = jobCards.map((card: APICardType) => {
-          console.log("a3113", card)
           return {
-            fileName: "",
+            fileName: card.filename,
             jobId: card.jobid,
             status: card.status,
-            size: 0,
-            duration: 0,
+            size: Number(card.size),
+            duration: Number(card.duration),
           }
         })
-        console.log("a324", jobs)
-
         setJobCards(jobs)
       }
     } catch (err) {

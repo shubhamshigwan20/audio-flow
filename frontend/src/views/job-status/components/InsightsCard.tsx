@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import useJobStatus from "@/store/JobStatusStore"
+import { formatSeconds } from "@/utils/helper"
 
 type HeadersType = {
   status: string
@@ -41,7 +42,7 @@ const InsightsCard = (props: InsightsCardPropType) => {
       secondsElapsed = (now - dbTime) / 1000
     }
 
-    return Math.round(secondsElapsed)
+    return formatSeconds(secondsElapsed)
   }
   return (
     <div>
@@ -64,7 +65,7 @@ const InsightsCard = (props: InsightsCardPropType) => {
             </div>
             <div>
               <p>Elapsed</p>
-              <p>{getElapsedTime()}s</p>
+              <p>{getElapsedTime()}</p>
             </div>
             <div>
               <p>Est. remaining</p>
