@@ -13,8 +13,8 @@ const Header = () => {
   const navItems = [
     { path: "/", label: "Transcribe" },
     { path: "/job-history", label: "My Jobs" },
-    { path: "/observe", label: "Observe" },
-    { path: "/dlq", label: "DLQ" },
+    // { path: "/observe", label: "Observe" },
+    // { path: "/dlq", label: "DLQ" },
   ]
 
   const isActive = (path: string) => {
